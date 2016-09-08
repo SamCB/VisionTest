@@ -2,7 +2,7 @@ import utils
 import random
 
 
-def use():
+def initialise():
     return RandomFunction().answer
 
 

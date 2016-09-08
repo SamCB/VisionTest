@@ -5,7 +5,7 @@ directory = os.path.dirname(__file__)
 FILE = "{}/0.jpg".format(directory)
 
 
-def use():
+def initialise():
     return Fake().read
 
 

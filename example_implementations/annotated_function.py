@@ -1,6 +1,6 @@
 """Return the same general annotation every time"""
 
-def use():
+def initialise():
     return answer
 
 

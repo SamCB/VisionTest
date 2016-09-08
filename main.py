@@ -18,8 +18,8 @@ def import_module(name):
 
 
 def main(function, img_input, **kwargs):
-    get_answer = import_module(function).use()
-    camera = import_module(img_input).use()
+    get_answer = import_module(function).initialise()
+    camera = import_module(img_input).initialise()
 
     while True:
         img, desc = camera()

@@ -1,7 +1,7 @@
 import cv2
 
 
-def use():
+def initialise():
     return CameraInput().read
 
 
