@@ -69,12 +69,15 @@ class RandomFunction:
                 f['func'] = random_line
             elif feature.schema == utils.Point:
                 f['func'] = random_point
-            f['points'] = f['func'](720, 1280)
             self.features.append(f)
 
     def answer(self, frame):
         output = []
         for f in self.features:
+            if 'points' not in f:
+                # Initialise points if they don't exist yet
+                f['points'] = f['func'](*frame.shape[:2])
+
             f['points'] = f['func'](*frame.shape[:2], **f['points'])
             output.append((f['name'], f['points']))
 
