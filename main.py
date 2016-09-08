@@ -1,124 +1,33 @@
 from __future__ import division, print_function
 
 import importlib
+import imp
 import cv2
+import argparse
 
 from utils import from_dictionary
 
 
-def answer(img):
-    test_annotations = [
-        {
-            "class": "Ball",
-            "height": 66.0,
-            "width": 64.0,
-            "x": 502.0,
-            "y": 267.0
-        },
-        {
-            "class": "Goal Post",
-            "height": 168.0,
-            "width": 26.0,
-            "x": 417.0,
-            "y": -4.0
-        },
-        {
-            "class": "Field Line",
-            "x1": 272.0,
-            "x2": 0.0,
-            "y1": 120.0,
-            "y2": 130.0
-        },
-        {
-            "class": "Field Line",
-            "x1": 270.0,
-            "x2": 638.0,
-            "y1": 117.0,
-            "y2": 212.0
-        },
-        {
-            "class": "Field Line",
-            "x1": 397.0,
-            "x2": 286.0,
-            "y1": 150.0,
-            "y2": 159.0
-        },
-        {
-            "class": "Field Line",
-            "x1": 285.0,
-            "x2": 638.0,
-            "y1": 159.0,
-            "y2": 297.0
-        },
-        {
-            "class": "Corner",
-            "x": 271.0,
-            "y": 120.0
-        },
-        {
-            "class": "Corner",
-            "x": 285.0,
-            "y": 161.0
-        },
-        {
-            "class": "T Junction",
-            "x": 393.0,
-            "y": 150.0
-        },
-        {
-            "class": "X Junction",
-            "x": 273.0,
-            "y": 68.0
-        },
-        {
-            "class": "Penalty Spot",
-            "x": 166.0,
-            "y": 220.0
-        },
-        {
-            "class": "Center Circle",
-            "x": 240.0,
-            "y": 78.0
-        },
-        {
-            "class": "Nao",
-            "height": 86.0,
-            "width": 49.0,
-            "x": 49.0,
-            "y": 12.0
-        },
-        {
-            "class": "Not Ball",
-            "height": 38.0,
-            "width": 43.0,
-            "x": 110.0,
-            "y": 19.0
-        }
-    ]
-    return ((a.pop('class'), a) for a in test_annotations)
+def import_module(name):
+    if name[-3:] == ".py":
+        # assume we're working with a path
+        return imp.load_source("function", name)
+    else:
+        # assume we're working with a module
+        return importlib.import_module(name)
 
 
-def main(function, **kwargs):
-    #get_answer = importlib.import_module(function).use()
-    get_answer = answer
-    # cam = cv2.VideoCapture(0)
-    class Fake:
-
-        def __init__(self):
-            self.img = cv2.imread("0.jpg")
-
-        def read(self):
-            return True, self.img
-
-    cam = Fake()
+def main(function, img_input, **kwargs):
+    get_answer = import_module(function).use()
+    camera = import_module(img_input).use()
 
     while True:
-        ret_val, img = cam.read()
+        img, desc = camera()
         vals = get_answer(img)
         for name, points in vals:
             from_dictionary(points, name=name).draw(img)
 
-        cv2.imshow('my webcam', img)
+        cv2.imshow(desc, img)
 
         if cv2.waitKey(1) == 27:
             break
@@ -126,4 +35,15 @@ def main(function, **kwargs):
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    main('random_function')
+    description = """\
+Test out vision functions for Robot Soccer.
+"""
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        "function", help="module containing method for performing CV analysis"
+    )
+    parser.add_argument(
+        "input", help="module that provides image frames for the analysis"
+    )
+    args = parser.parse_args()
+    main(args.function, args.input)
