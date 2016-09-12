@@ -34,6 +34,18 @@ class Rectangle:
                     (self.x, self.y - np.float32(2)),
                     FONT, 0.5, colour, 1)
 
+    def sq_difference(self, other):
+        def rotate_points(rect):
+            yield rect.x, rect.y, rect.height, rect.width
+            yield rect.x + rect.width, rect.y, rect.height, -rect.width
+            yield rect.x + rect.width, rect.y + rect.height, -rect.height, -rect.width
+            yield rect.x, rect.y + rect.height, -rect.height, rect.width
+
+        def compare_points(a, b):
+            return (a.x - b[0])**2 + (a.y - b[1])**2 + (a.height - b[2])**2 + (a.width - b[3])**2
+
+        return min(compare_points(self, o) for o in rotate_points(other))
+
     def __repr__(self):
         return "{}({}, {}, {}, {}, {})".format(self.__class__.__name__,
                                                self.x, self.y,
@@ -59,6 +71,10 @@ class Point:
         cv2.putText(img, title,
                     (self.x, self.y - np.float32(Point.CIRCLE_RADIUS + 1)),
                     FONT, 0.5, colour, 1)
+
+    def sq_difference(self, other):
+        return (self.x - other.x)**2 + (self.y - other.y)**2
+
     def __repr__(self):
         return "{}({}, {}, {})".format(self.__class__.__name__,
                                        self.x, self.y, self.name)
@@ -88,6 +104,16 @@ class Line:
         else:
             # slope up, text should be below
             pos = (self.x1, self.y1 + np.float32(6))
+
+    def sq_difference(self, other):
+        def rotate_points(line):
+            yield line.x1, line.y1, line.x2, line.y2
+            yield line.x2, line.y2, line.x1, line.y1
+
+        def compare_points(a, b):
+            return (a.x1 - b[0])**2 + (a.y1 - b[1])**2 + (a.x2 - b[2])**2 + (a.y2 - b[3])**2
+
+        return min(compare_points(self, o) for o in rotate_points(other))
 
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(self.__class__.__name__,

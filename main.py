@@ -3,10 +3,13 @@ from __future__ import division, print_function
 import importlib
 import imp
 import sys
-import cv2
 import argparse
+from pprint import pprint
+
+import cv2
 
 from utils import from_dictionary
+from comparison import compare_results_to_annotation, comparison_string
 
 
 def import_module(name):
@@ -35,16 +38,28 @@ def main(function, img_input, annotations=None, **kwargs):
         get_annotations = import_module(annotations).initialise()
     else:
         get_annotations = None
+    print("Loaded:")
+    print("- Function:", function)
+    print("- Image Source:", img_input)
+    print("- Annotations:", annotations)
 
     show_img = not kwargs.get('silent', False)
 
     while True:
         img, desc = camera()
-        vals = get_answer(img)
-        for name, points in vals:
-            from_dictionary(points, name=name).draw(img)
+        results = get_answer(img)
+        if get_annotations:
+            annotation = get_annotations(desc)
+            if annotation is None:
+                print("Couldn't find annotation for:", desc)
+                print("End")
+                break
+            comparison = compare_results_to_annotation(results, annotation)
+            print(comparison_string(comparison=comparison))
 
         if show_img:
+            for name, points in results:
+                from_dictionary(points, name=name).draw(img)
             cv2.imshow(desc, img)
 
             if cv2.waitKey(1) == 27:
