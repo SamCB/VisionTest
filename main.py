@@ -10,13 +10,21 @@ import cv2
 
 from utils import from_dictionary
 from comparison import compare_results_to_annotation, comparison_string
-
+from video import VideoInput
 
 def import_module(name):
     if name[-3:] == ".py":
         # assume we're working with a path
         try:
             return imp.load_source("function", name)
+        except IOError:
+            print("ERROR: Could not find file: {}".format(name))
+            print("Exiting")
+            sys.exit()
+    elif name[-4:] == ".mp4":
+        # assume we've been given a movie file
+        try:
+            return VideoInput(name)
         except IOError:
             print("ERROR: Could not find file: {}".format(name))
             print("Exiting")
