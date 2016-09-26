@@ -10,7 +10,7 @@ import cv2
 
 from utils import from_dictionary
 from comparison import compare_results_to_annotation, comparison_string
-
+from comparison_set import ComparisonSet
 
 def import_module(name):
     if name[-3:] == ".py":
@@ -45,6 +45,9 @@ def main(function, img_input, annotations=None, **kwargs):
 
     show_img = not kwargs.get('silent', False)
 
+    if get_annotations:
+        comparison_set = ComparisonSet()
+
     while True:
         img, desc = camera()
         results = get_answer(img)
@@ -55,7 +58,7 @@ def main(function, img_input, annotations=None, **kwargs):
                 print("End")
                 break
             comparison = compare_results_to_annotation(results, annotation)
-            print(comparison_string(comparison=comparison))
+            comparison_set.add(comparison)
 
         if show_img:
             for name, points in results:
@@ -67,6 +70,8 @@ def main(function, img_input, annotations=None, **kwargs):
 
     if show_img:
         cv2.destroyAllWindows()
+    if get_annotations:
+        comparison_set.print_averages()
 
 if __name__ == '__main__':
     description = """\
