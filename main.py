@@ -80,19 +80,66 @@ if __name__ == '__main__':
     description = """\
 Test out vision functions for Robot Soccer.
 """
-    parser = argparse.ArgumentParser(description=description)
+    epilog = """\
+---------------------------
+Examples:
+---------------------------
+
+To run some example function through the
+camera input:
+
+    python {name} function.py camera.py
+
+To run some random function with an example
+input and the example annotation test:
+
+    python {name} function.py other_input.py annotation.py
+
+If a camera requires input, for example,
+the name of video files, you can use:
+
+    python {name} function.py video.py annotation.py -i foo.mp4 -i bar.mp4 -i baz.mp4
+
+Where each -i argument will be handed as a
+seperate argument to the initialiser in
+video.py.
+
+Similarly, use -f to hand arguments into
+the function initialiser and -a to hand
+arguments into the annotation initialiser
+""".format(name=__file__)
+    parser = argparse.ArgumentParser(description=description, epilog=epilog,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '-s', '--silent', action='store_true',
         help='do not display images during testing')
-    parser.add_argument(
+    function_group = parser.add_argument_group('function group')
+    function_group.add_argument(
         "function", help="module containing method for performing CV analysis"
     )
-    parser.add_argument(
+    function_group.add_argument(
+        "-f", "--farg", action="append", default=[],
+        help="arguments to pass to the function module initialiser"
+    )
+
+    input_group = parser.add_argument_group('input group')
+    input_group.add_argument(
         "input", help="module that provides image frames for the analysis"
     )
-    parser.add_argument(
+    input_group.add_argument(
+        "-i", "--iarg", action="append", default=[],
+        help="arguments to pass to the input module initialiser"
+    )
+
+    annotations_group = parser.add_argument_group('annotations group')
+    annotations_group.add_argument(
         "annotations", nargs="?", default=None,
         help="module returning the correct annotations for given images"
     )
+    annotations_group.add_argument(
+        "-a", "--aarg", action="append", default=[],
+        help="arguments to pass to the annotations module initialiser"
+    )
     args = parser.parse_args()
+
     main(args.function, args.input, args.annotations, silent=args.silent)
