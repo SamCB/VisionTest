@@ -21,14 +21,6 @@ def import_module(name):
             print("ERROR: Could not find file: {}".format(name))
             print("Exiting")
             sys.exit()
-    elif name[-4:] == ".mp4":
-        # assume we've been given a movie file
-        try:
-            return VideoInput(name)
-        except IOError:
-            print("ERROR: Could not find file: {}".format(name))
-            print("Exiting")
-            sys.exit()
     else:
         # assume we're working with a module
         try:
@@ -39,11 +31,13 @@ def import_module(name):
             sys.exit()
 
 
-def main(function, img_input, annotations=None, **kwargs):
-    get_answer = import_module(function).initialise()
-    camera = import_module(img_input).initialise()
+def main(function, function_args,
+         img_input, input_args,
+         annotations=None, annotation_args=None, **kwargs):
+    get_answer = import_module(function).initialise(*function_args)
+    camera = import_module(img_input).initialise(*input_args)
     if annotations:
-        get_annotations = import_module(annotations).initialise()
+        get_scbannotations = import_module(annotations).initialise(*annotation_args)
     else:
         get_annotations = None
     print("Loaded:")
@@ -142,4 +136,7 @@ arguments into the annotation initialiser
     )
     args = parser.parse_args()
 
-    main(args.function, args.input, args.annotations, silent=args.silent)
+    main(args.function, args.farg,
+         args.input, args.iarg,
+         args.annotations, args.aarg,
+         silent=args.silent)

@@ -1,9 +1,11 @@
 import cv2
 
-class VideoInput():
 
-    def initialise(self):
-        return self.read
+def initialise(video_file):
+    return VideoInput(video_file).read
+
+
+class VideoInput():
 
     def __init__(self, file):
         self.file = file
