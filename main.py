@@ -48,8 +48,19 @@ def main(function, function_args,
     show_img = not kwargs.get('silent', False)
 
     while True:
-        img, desc = camera()
+        # Retrieve image and description from our image input
+        response = camera()
+        if response is None:
+            print("Out of Images")
+            print("End")
+            break
+        else:
+            img, desc = response
+
+        # Retrieve estimation from our function
         results = get_answer(img)
+
+        # Compare our estimation if we're expecting it
         if get_annotations:
             annotation = get_annotations(desc)
             if annotation is None:
@@ -59,10 +70,11 @@ def main(function, function_args,
             comparison = compare_results_to_annotation(results, annotation)
             print(comparison_string(comparison=comparison))
 
+        # If we want to display the image, display it
         if show_img:
             for name, points in results:
                 from_dictionary(points, name=name).draw(img)
-            cv2.imshow(desc, img)
+            cv2.imshow("Test Image", img)
 
             if cv2.waitKey(1) == 27:
                 break

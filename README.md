@@ -27,7 +27,7 @@ Will mark the response from the return of the function file against the return o
 If a module requires initialisation arguments, they can be provided with the `-f`, `-i`, `-a` flags for the function, input and annotation modules respectively. For example:
 
 ```
-python main.py example_implementations/random_function.py video.py -i test_video.mp4
+python main.py example_implementations/random_function.py imageset.py -i ../sunny_field_raw/ -i lazy
 ```
 
 ## Writing your own function
