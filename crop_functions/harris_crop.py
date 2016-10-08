@@ -14,7 +14,8 @@ def retrieve_subsections(img):
     """
     if len(img.shape) == 3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+    else:
+        gray = img
     results = cv2.cornerHarris(gray, 9, 3, 0.04)
     # Normalise harris points between 0 and 1
     hmin = results.min()
