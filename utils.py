@@ -1,7 +1,11 @@
+import os
+
 import cv2
 import numpy as np
 
 from collections import Counter
+
+from image_utils import image_resize_inscale, get_histogram
 
 FONT = cv2.FONT_HERSHEY_PLAIN
 COLOUR = (0, 0, 255)
@@ -154,3 +158,41 @@ NOT_BALL = Feature("Not Ball", Rectangle)
 
 USED_FEATURES = [BALL, GOAL_POST, FIELD_LINE, CORNER, T_JUNCTION, X_JUNCTION,
                  PENALTY_SPOT, CENTER_CIRCLE, NAO]
+
+class DataSet:
+    def __init__(self):
+        self._data = []
+        self._labels = []
+
+    def add_images_from_folder(self, label, folder):
+        for f in os.listdir(folder):
+            img = cv2.imread(os.path.join(folder, f), 0)
+            if img is not None:
+                if abs(img.shape[0] - img.shape[1]) > max(img.shape)/2:
+                    # if it's too rectangular, we don't want the image
+                    continue
+
+                self._data.append(img)
+                self._labels.append(label)
+
+    def confirm(self, image_scale=(8, 8), histogram_scale=8):
+        images = []
+        histograms = []
+        labels = []
+
+        for image, label in zip(self._data, self._labels):
+            images.append(image_resize_inscale(image, image_scale))
+            histograms.append(get_histogram(image, histogram_scale))
+            labels.append(label)
+
+        p = np.random.permutation(len(self._data))
+
+        self.images = np.array(images)[p]
+        self.histograms = np.array(histograms)[p]
+        self.labels = np.array(labels)[p]
+
+    def __len__(self):
+        if hasattr(self, 'labels'):
+            return len(self.labels)
+        else:
+            return 0
