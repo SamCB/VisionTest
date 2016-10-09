@@ -2,6 +2,7 @@ from __future__ import print_function
 import cv2
 import os
 
+from image_utils import resize
 
 def initialise(directory, *args):
     lazy = "lazy" in args
@@ -71,11 +72,3 @@ class LazyImageSetInput():
             if image is not None:
                 return resize(image, self.scale), rel_path
             # Otherwise, try with the next image
-
-def resize(img, scale):
-    if scale == 1:
-        return img
-    else:
-        return cv2.resize(img, (int(img.shape[1] * scale), int(img.shape[0] * scale)),
-                          interpolation=cv2.INTER_AREA # Assume we're shrinking
-        )
