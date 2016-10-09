@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+DILATION_KERNEL = np.ones((31, 31), np.uint8)
+
 def retrieve_subsections(img):
     """Yield coordinates of boxes that contain interesting images
 
@@ -22,15 +24,20 @@ def retrieve_subsections(img):
     hmax = results.max()
     results = (results - hmin)/(hmax-hmin)
 
-    # Blur so we retrieve the surrounding details
-    results = cv2.GaussianBlur(results, (31, 31), 5)
-
     # Create a threshold collecting the most interesting areas
     threshold = np.zeros(results.shape, dtype=np.uint8)
     threshold[results>results.mean() * 1.01] = 255
+
+    cv2.imshow("predilation", quick_resize(threshold))
+    # expand so we join close points
+    threshold = cv2.dilate(threshold, DILATION_KERNEL, iterations=1)
+    cv2.imshow("dilation", quick_resize(threshold))
 
     # Find the bounding box of each threshold, and yield the image
     contours,_ = cv2.findContours(threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
         # x, y, w, h
         yield cv2.boundingRect(contour)
+
+def quick_resize(img):
+    return cv2.resize(img, (img.shape[0]//4, img.shape[1]//4))
