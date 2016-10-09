@@ -1,4 +1,4 @@
-from sklearn import neighbors, tree
+from sklearn import neighbors, tree, svm, naive_bayes
 import cv2
 
 from utils import DataSet
@@ -13,12 +13,24 @@ NOTHING_FILES = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/robot_
 NAO_FILES_1 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/MultiNaoMovingCamera/cropped/Nao/"
 NAO_FILES_2 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/SPQR/cropped/Nao/"
 
+ALGORITHMS = {"tree": tree.DecisionTreeClassifier,
+              "kNeighbors": neighbors.KNeighborsClassifier,
+              "svm": svm.LinearSVC,
+              "naiveBayes": naive_bayes.GaussianNB}
 
-def initialise():
-    return ScikitLearnt().answer
+
+def initialise(algorithm="tree"):
+    try:
+        return ScikitLearnt(ALGORITHMS[algorithm]).answer
+    except KeyError:
+        raise ValueError("Invalid Algorithm: '{}'. "
+                         "Valid algorithms are: {}"
+                         .format(algorithm, list(ALGORITHMS))
+        )
+
 
 class ScikitLearnt:
-    def __init__(self):
+    def __init__(self, classifier):
         print "Loading Data"
         self.data = DataSet()
         self.data.add_images_from_folder("ball", BALL_FILES_1)
@@ -33,7 +45,7 @@ class ScikitLearnt:
         self.data.confirm(image_scale=(8, 8), histogram_scale=8)
 
         print "Training Classifier"
-        self.classifier = tree.DecisionTreeClassifier()
+        self.classifier = classifier()
         self.training_size = int(len(self.data)*TRAINING_PROPORTION)
         self.classifier.fit(self.data.images[:self.training_size],
                             self.data.labels[:self.training_size])
