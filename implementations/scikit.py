@@ -4,6 +4,7 @@ import cv2
 from utils import DataSet
 from image_utils import get_histogram, image_resize_inscale
 from crop_functions.harris_crop import retrieve_subsections
+from crop_functions.subarea_crop import subarea_crop
 TRAINING_PROPORTION = 1
 
 BALL_FILES_1 = "../vision_test_files/inside_ball_cropped/"
@@ -56,7 +57,11 @@ class ScikitLearnt:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         subsection_coords = []
         subsection_images = []
-        for x, y, w, h in retrieve_subsections(img):
+        for x, y, w, h in subarea_crop(retrieve_subsections(img)):
+            if abs(w - h) > max(w, h)/2:
+                # if it's too rectangular, we don't want the image
+                continue
+
             subsection_coords.append((x, y, w, h))
             subsection_images.append(process_subsection(img[y:y+h, x:x+w]))
 
