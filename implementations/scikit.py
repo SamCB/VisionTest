@@ -6,12 +6,12 @@ from image_utils import get_histogram, image_resize_inscale
 from crop_functions.harris_crop import retrieve_subsections
 TRAINING_PROPORTION = 1
 
-BALL_FILES_1 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/inside_ball_cropped/"
-BALL_FILES_2 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/outside_ball_cropped/"
-BALL_FILES_3 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/SPQR/cropped/Ball/"
-NOTHING_FILES = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/robot_ball_fp/"
-NAO_FILES_1 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/MultiNaoMovingCamera/cropped/Nao/"
-NAO_FILES_2 = "/Users/SamCB/Documents/UNSW/2016s2/RSA/vision_test_files/SPQR/cropped/Nao/"
+BALL_FILES_1 = "../vision_test_files/inside_ball_cropped/"
+BALL_FILES_2 = "../vision_test_files/outside_ball_cropped/"
+BALL_FILES_3 = "../vision_test_files/SPQR/cropped/Ball/"
+NOTHING_FILES = "../vision_test_files/robot_ball_fp/"
+NAO_FILES_1 = "../vision_test_files/MultiNaoMovingCamera/cropped/Nao/"
+NAO_FILES_2 = "../vision_test_files/SPQR/cropped/Nao/"
 
 ALGORITHMS = {"tree": tree.DecisionTreeClassifier,
               "kNeighbors": neighbors.KNeighborsClassifier,
