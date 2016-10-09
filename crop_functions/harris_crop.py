@@ -1,9 +1,7 @@
 import cv2
 import numpy as np
 
-DILATION_KERNEL = np.ones((31, 31), np.uint8)
-
-def retrieve_subsections(img):
+def retrieve_subsections(img, kernel_size=(15, 15), iterations=1):
     """Yield coordinates of boxes that contain interesting images
 
     Yields x, y coordinates; width and height as a tuple
@@ -28,16 +26,13 @@ def retrieve_subsections(img):
     threshold = np.zeros(results.shape, dtype=np.uint8)
     threshold[results>results.mean() * 1.01] = 255
 
-    cv2.imshow("predilation", quick_resize(threshold))
-    # expand so we join close points
-    threshold = cv2.dilate(threshold, DILATION_KERNEL, iterations=1)
-    cv2.imshow("dilation", quick_resize(threshold))
+    dilation_kernel = np.ones(kernel_size, np.uint8)
+    for iteration in range(iterations):
+        # expand so we join points that are close to each other
+        threshold = cv2.dilate(threshold, dilation_kernel, iterations=1)
 
-    # Find the bounding box of each threshold, and yield the image
-    contours,_ = cv2.findContours(threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    for contour in contours:
-        # x, y, w, h
-        yield cv2.boundingRect(contour)
-
-def quick_resize(img):
-    return cv2.resize(img, (img.shape[0]//4, img.shape[1]//4))
+        # Find the bounding box of each threshold, and yield the image
+        contours,_ = cv2.findContours(threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        for contour in contours:
+            # x, y, w, h
+            yield cv2.boundingRect(contour)
