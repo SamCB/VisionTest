@@ -20,3 +20,12 @@ def image_resize_inscale(image, size):
 def get_histogram(image, histogram_scale):
     h = cv2.calcHist([image], [0], None, [histogram_scale], [0, 256]).flatten()
     return h/256
+
+
+def resize(img, scale):
+    if scale == 1:
+        return img
+    else:
+        return cv2.resize(img, (int(img.shape[1] * scale), int(img.shape[0] * scale)),
+                          interpolation=cv2.INTER_AREA # Assume we're shrinking
+        )

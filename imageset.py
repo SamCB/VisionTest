@@ -2,19 +2,29 @@ from __future__ import print_function
 import cv2
 import os
 
+from image_utils import resize
 
-def initialise(directory, lazy=False):
+def initialise(directory, *args):
+    lazy = "lazy" in args
+    args = tuple(arg for arg in args if arg != "lazy")
+
+    try:
+        scale = float(args[0])
+    except ValueError, IndexError:
+        scale = 1.
+
     if lazy:
-        return LazyImageSetInput(directory).read
+        return LazyImageSetInput(directory, scale).read
     else:
-        return ImageSetInput(directory).read
+        return ImageSetInput(directory, scale).read
 
 class ImageSetInput():
 
-    def __init__(self, directory):
+    def __init__(self, directory, scale):
         self.images = []
         file_list = os.listdir(directory)
         count = 0
+        print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
         for filename in file_list:
             print("Loading Files: {:4}/{:4}".format(count, len(file_list)),
                   end="\r")
@@ -23,7 +33,7 @@ class ImageSetInput():
             image = cv2.imread(full_path)
             if image is not None:
                 rel_path = os.path.relpath(full_path)
-                self.images.append((image, rel_path))
+                self.images.append((resize(image, scale), rel_path))
 
             count += 1
 
@@ -41,10 +51,12 @@ class ImageSetInput():
 
 class LazyImageSetInput():
 
-    def __init__(self, directory):
+    def __init__(self, directory, scale):
         self.directory = directory
         self.file_list = os.listdir(directory)
+        self.scale = scale
         self._index = 0
+        print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
 
     def read(self):
         while True:
@@ -58,5 +70,5 @@ class LazyImageSetInput():
             rel_path = os.path.relpath(full_path)
             image = cv2.imread(full_path)
             if image is not None:
-                return image, rel_path
+                return resize(image, self.scale), rel_path
             # Otherwise, try with the next image
