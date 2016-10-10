@@ -27,8 +27,6 @@ def main(source, output_folder):
             break
 
         img, source_name = img_response
-        print(img, source_name)
-        break
         crops = ReversableIterator(subarea_crop(retrieve_subsections(img)))
         suboutputs = []
         for idx, (x, y, w, h) in crops:
