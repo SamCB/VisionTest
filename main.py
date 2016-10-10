@@ -1,7 +1,5 @@
 from __future__ import division, print_function
 
-import importlib
-import imp
 import sys
 import argparse
 from pprint import pprint
@@ -9,26 +7,9 @@ from pprint import pprint
 import cv2
 
 from utils import from_dictionary
+from import_module import import_module
 from comparison import compare_results_to_annotation, comparison_string
 from video import VideoInput
-
-def import_module(name):
-    if name[-3:] == ".py":
-        # assume we're working with a path
-        try:
-            return imp.load_source("function", name)
-        except IOError:
-            print("ERROR: Could not find file: {}".format(name))
-            print("Exiting")
-            sys.exit()
-    else:
-        # assume we're working with a module
-        try:
-            return importlib.import_module(name)
-        except ImportError:
-            print("ERROR: Could not find module: {}".format(name))
-            print("Exiting")
-            sys.exit()
 
 
 def main(function, function_args,
