@@ -3,11 +3,12 @@ import cv2
 from image_utils import resize
 
 
-def initialise(scale=1):
-    try:
-        scale = float(scale)
-    except ValueError:
-        scale = 1.
+def initialise(*args):
+    scale = 1.
+    for arg in args:
+        if arg[0] == "s":
+            scale = float(arg[1:])
+
     return CameraInput(scale).read
 
 

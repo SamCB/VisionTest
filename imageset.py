@@ -5,24 +5,26 @@ import os
 from image_utils import resize
 
 def initialise(directory, *args):
-    lazy = "lazy" in args
-    args = tuple(arg for arg in args if arg != "lazy")
-
-    try:
-        scale = float(args[0])
-    except ValueError, IndexError:
-        scale = 1.
+    lazy, scale, rate = False, 1., 1
+    for arg in args:
+        if arg == "lazy":
+            lazy = True
+        elif arg[0] == "s":
+            scale = float(arg[1:])
+        elif arg[0] == "r":
+            rate = int(arg[1:])
 
     if lazy:
-        return LazyImageSetInput(directory, scale).read
+        return LazyImageSetInput(directory, scale, rate).read
     else:
-        return ImageSetInput(directory, scale).read
+        return ImageSetInput(directory, scale, rate).read
 
 class ImageSetInput():
 
-    def __init__(self, directory, scale):
+    def __init__(self, directory, scale, rate):
         self.images = []
-        file_list = os.listdir(directory)
+        # if rate == 1, every element, otherwise every 'rate' image
+        file_list = os.listdir(directory)[::rate]
         count = 0
         print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
         for filename in file_list:
@@ -51,9 +53,9 @@ class ImageSetInput():
 
 class LazyImageSetInput():
 
-    def __init__(self, directory, scale):
+    def __init__(self, directory, scale, rate):
         self.directory = directory
-        self.file_list = os.listdir(directory)
+        self.file_list = os.listdir(directory)[::rate]
         self.scale = scale
         self._index = 0
         print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
