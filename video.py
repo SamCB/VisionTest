@@ -21,5 +21,5 @@ class VideoInput():
     def read(self):
         result, img = self.cam.read()
         if not result:
-            raise ValueError("Could not read from file")
+            return None
         return resize(img, self.scale), self.file
