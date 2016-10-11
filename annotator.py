@@ -43,6 +43,8 @@ def main(source, output_folder):
             if classification is None:
                 crops.back()
                 print("BACKSPACE:")
+            elif classification == "__SKIP__":
+                print("{:4d} - Skipped".format(idx))
             else:
                 print("{:4d} - {}".format(idx, classification))
 
@@ -128,7 +130,8 @@ KEYBOARD_CLASS_MAP = {
     ord("p"): "PENALTY_SPOT_PART",
     ord("K"): "KICKOFF_POINT",
     ord("k"): "KICKOFF_POINT_PART",
-    ord(" "): "NOTHING"
+    ord(" "): "NOTHING",
+    ord("s"): "__SKIP__"
 }
 
 KEYBOARD_CLASS_STR = ", ".join("'{}'- {}".format(chr(c), class_) for c, class_ in KEYBOARD_CLASS_MAP.items())
