@@ -5,6 +5,8 @@ import imp
 import sys
 import argparse
 from pprint import pprint
+import os
+import numpy as np
 
 import cv2
 
@@ -33,11 +35,11 @@ def import_module(name):
 
 def main(function, function_args,
          img_input, input_args,
-         annotations=None, annotation_args=None, **kwargs):
+         annotations=None, annotation_args=None, kwargs=None):
     get_answer = import_module(function).initialise(*function_args)
     camera = import_module(img_input).initialise(*input_args)
     if annotations:
-        get_scbannotations = import_module(annotations).initialise(*annotation_args)
+        get_annotations = import_module(annotations).initialise(*annotation_args)
     else:
         get_annotations = None
     print("Loaded:")
@@ -46,6 +48,8 @@ def main(function, function_args,
     print("- Annotations:", annotations)
 
     show_img = not kwargs.get('silent', False)
+    save_img = kwargs.get('save', False)
+    im_count = 1
 
     while True:
         # Retrieve image and description from our image input
@@ -70,6 +74,16 @@ def main(function, function_args,
             comparison = compare_results_to_annotation(results, annotation)
             print(comparison_string(comparison=comparison))
 
+        # If we want to save the cropped images, save them.
+        if save_img:
+            for name, points in results:
+                cropped = img[points['y']:points['y']+points['height'], 
+                                        points['x']:points['x']+points['width']]
+                cv2.imwrite(os.path.join('cropped_ims', 
+                                         '0'*(6-int(np.log10(im_count))) +
+                                               str(im_count)) + '.bmp', cropped)
+                im_count += 1
+            
         # If we want to display the image, display it
         if show_img:
             for name, points in results:
@@ -119,6 +133,9 @@ arguments into the annotation initialiser
     parser.add_argument(
         '-s', '--silent', action='store_true',
         help='do not display images during testing')
+    parser.add_argument(
+        '-v', '--save', dest='save', action='store_true',
+        help='save cropped images during testing')
     function_group = parser.add_argument_group('function group')
     function_group.add_argument(
         "function", help="module containing method for performing CV analysis"
@@ -147,8 +164,8 @@ arguments into the annotation initialiser
         help="arguments to pass to the annotations module initialiser"
     )
     args = parser.parse_args()
-
+    
     main(args.function, args.farg,
          args.input, args.iarg,
          args.annotations, args.aarg,
-         silent=args.silent)
+         vars(args))

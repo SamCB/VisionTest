@@ -44,6 +44,7 @@ sys.path.insert(0, './implementations/ColourROI')
 sys.path.insert(0, './crop_functions')
 from ROIFindColour import ROIFindColour
 from harris_crop import retrieve_subsections
+from harris_crop import retrieve_output_subsections
 
 """
 Run with (specific to my file layout):
@@ -61,7 +62,7 @@ def initialise():
         passed.
     """
     
-    return filteredHarrisROI
+    return retrieve_output_subsections
     
 def filteredColourROI(im):
     
