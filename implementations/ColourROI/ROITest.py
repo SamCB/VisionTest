@@ -41,18 +41,19 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.insert(0, './implementations/ColourROI')
+sys.path.insert(0, './example_implementations')
 sys.path.insert(0, './crop_functions')
 from ROIFindColour import ROIFindColour
 from harris_crop import retrieve_subsections
 from subarea_crop import subarea_crop
-from harris_crop import retrieve_output_subsections
+from naive_harris_function import initialise as naive_harris_initialise
 
 """
 Run with (specific to my file layout):
 python main.py ./implementations/ColourROI/ROITest.py SPQRRead.py SPQRAnnotations.py
 """
 
-def initialise():
+def initialise(*args):
     """
     Creates the network and returns the annotation function.
     
@@ -63,7 +64,7 @@ def initialise():
         passed.
     """
     
-    return filteredHarrisROI
+    return naive_harris_initialise(*args)
     
 def filteredColourROI(im):
     

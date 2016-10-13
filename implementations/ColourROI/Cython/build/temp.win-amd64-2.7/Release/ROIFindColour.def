@@ -1,3 +1,0 @@
-LIBRARY ROIFindColour.pyd
-EXPORTS
-initROIFindColour
