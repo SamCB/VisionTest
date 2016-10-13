@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 import cv2
 
-from data_set import DataSet
+from dataset import DataSet
 
 def load_data(directory, data_processor_module):
     file_list = os.listdir(directory)
@@ -18,6 +18,7 @@ def load_data(directory, data_processor_module):
         # The files will be of the type:
         # CLASS-source-frame-itemnumber.jpg
         label = f.split("-")[0].lower()
+        # if label != "nao_part":
         data_set.add_image(img, label)
 
         if i % 100:

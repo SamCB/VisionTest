@@ -33,7 +33,7 @@ class DataSet:
 
         print("Randomizing data order.                    ", end="\r")
         p = np.random.permutation(len(self._data))
-        self.data = np.array(processed)[p]
+        self.data = np.array(processed_data)[p]
         self.labels = np.array(labels)[p]
 
         print("Processing complete.    ")

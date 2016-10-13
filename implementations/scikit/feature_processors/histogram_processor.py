@@ -6,6 +6,8 @@ def feature_processor():
 def create_histogram_processor(histogram_scale=8):
     def histogram_processor(image):
         h = cv2.calcHist([image], [0, 1, 2], None, [histogram_scale]*3, [0, 256]*3)
-        return h.flatten()/256
+        h = h.flatten()
+        # normalise
+        return h/h.sum()
 
     return histogram_processor
