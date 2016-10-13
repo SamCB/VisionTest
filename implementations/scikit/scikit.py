@@ -9,7 +9,7 @@ from crop_functions.subarea_crop import subarea_crop
 
 
 def initialiser(algorithm, data_processor_module, data_folder):
-    data_processor = import_module(data_processor_module)
+    data_processor = import_module(data_processor_module).feature_processor()
     dataset = load_data(data_folder, data_processor_module)
 
     return ScikitImplementation(algorithm, dataset, data_processor).answer
