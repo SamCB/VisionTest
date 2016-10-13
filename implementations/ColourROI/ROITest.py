@@ -100,8 +100,8 @@ def filteredHarrisROI(im):
         classificationStart = time.clock()
         classification = net.run(im[y:y+h,x:x+w])
         classificationTime += time.clock()-classificationStart
-        if classification[0] > 0.7 or classification[1] > 0.7 or classification[2] > 0.7:
-            region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
+        if classification[10] > 0.7 or classification[11] > 0.7 or classification[12] > 0.7:
+            region = ('Nao', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
     print("Number of classifications: " + str(numClass))
     print("Total classification time: " + str(classificationTime))
