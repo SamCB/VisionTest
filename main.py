@@ -32,10 +32,10 @@ def import_module(name):
             print("Exiting")
             sys.exit()
 
-
 def main(function, function_args,
          img_input, input_args,
-         annotations=None, annotation_args=None, kwargs=None):
+         annotations=None, annotation_args=None, **kwargs):
+
     get_answer = import_module(function).initialise(*function_args)
     camera = import_module(img_input).initialise(*input_args)
     if annotations:
@@ -101,9 +101,9 @@ if __name__ == '__main__':
 Test out vision functions for Robot Soccer.
 """
     epilog = """\
----------------------------
+----------------------------
 Examples:
----------------------------
+----------------------------
 
 To run some example function through the
 camera input:
@@ -164,8 +164,8 @@ arguments into the annotation initialiser
         help="arguments to pass to the annotations module initialiser"
     )
     args = parser.parse_args()
-    
+
     main(args.function, args.farg,
          args.input, args.iarg,
          args.annotations, args.aarg,
-         vars(args))
+         silent=args.silent, save=args.save)

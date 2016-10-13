@@ -1,72 +1,135 @@
-# -*- coding: utf-8 -*-
-"""
+/*
 Created on Fri Oct 07 10:22:53 2016
 
 @author: Ethan Jones
-"""
+*/
 
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import scipy.misc
-from skimage.feature import blob_doh
-import bisect
-import time
+#include <vector>
+#include <cstdint>
+#include <algorithm>
+#include <stdlib>
 
-def ROIFindColour(im):
-    """
+using namespace std;
+
+typedef vector<vector<vector<float> > > vector3f;
+typedef vector<vector<float> > vector2f;
+typedef vector<vector<bool> > vector2b;
+typedef vector<vector<int> > vector2i;
+
+vector<int> ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
+{
+    /*
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
-    """
-    start = time.clock()
-    # Convert the image to a more usable format. A Nao version should be able to
-    # avoid this.
-    im = im.astype(np.float)
-    im /= 256
+    */
 
-    greenStart = time.clock()
+    // Convert the image to a more usable format.
+    vector3f im = baseIm;
+    for(vector3f::iterator y = im.begin(); y != im.end(); ++y)
+    {
+        for(vector2f::iterator x = im[y].begin(); x != im[y].end(); ++x)
+        {
+            for(vector<float>::iterator c = im[y][x].begin(); 
+                                                       c != im[y][x].end(); ++c)
+            {
+                im[x][y][c] /= 256.0;
+            }
+        }
+    }
     
-    # Estimate green.
-    green = np.median(im[300:im.shape[0]:5,0:im.shape[1]:5,:], (0,1))
+    // Estimate green as median of a sample from the bottom of the image.
+    // Certainly not very efficient, but it'll do for now.
+    vector2f samples = new vector2f(3);
+    samples[0] = new vector<float>());
+    samples[1] = new vector<float>());
+    samples[2] = new vector<float>());
+    for(int y = 300; y < im.size(); y += 5)
+    {
+        for(int x = 0; x < im[y].size(); x += 5)
+        {
+            for(int c = 0; c < im[y][x].size(); ++c)
+            {
+                samples[c].push_back(im[y][x][c]);
+            }
+        }
+    }
+    vector<float> green = new vector<float>(3);
+    for(int c = 0; c < samples.size(); ++c)
+    {
+        sort(samples[c].begin(), samples[c].end());
+        if(samples[c].size()%2 == 0)
+        {
+            green[c] = (samples[samples[c].size()/2-1][c] + 
+                                             samples[samples[c].size()/2][c])/2;
+        }
+    }
 
-    # Look for chunks of stuff that isn't green.
-    notGreen = np.sum(im - green, 2) > 0.5
+    // Look for chunks of stuff that isn't green.
+    vector2b notGreen = new vector2b(im.size());
+    for(int y = 0; y < im.size(); y++)
+    {
+        notGreen[y] = new vector<bool>(im[0].size());
+    }
+    for(int y = 0; y < im.size(); y++)
+    {
+        for(int x = 0; x < im[y].size(); x++)
+        {
+            // This was bugged (no abs) in the original.
+            notGreen[y][x] = (abs(im[y][x][0]-green[0]) + 
+                             abs(im[y][x][1]-green[1]) +
+                                               abs(im[y][x][2]-green[2])) > 0.5;
+        }
+    }
 
-    # Slow in python, but would be fast on Nao in C++.
-    groups = np.zeros(notGreen.shape, np.int)
-    groupsCounts = [0]
-    groupsLowX = [0]
-    groupsHighX = [0]
-    groupsLowY = [0]
-    groupsHighY = [0]
-    groupsLinks = [[0]]
-    numGroups = 0
+    // Connected component analysis preparation.
+    vector2i groups = new vector2i(im.size());
+    for(int y = 0; y < im.size(); y++)
+    {
+        notGreen[y] = new vector<bool>(im[0].size());
+    }
+    vector<int> groupsCounts = new vector<int>(1, 0);
+    vector<int> groupsLowX = new vector<int>(1, 0);
+    vector<int> groupsHighX = new vector<int>(1, 0);
+    vector<int> groupsLowY = new vector<int>(1, 0);
+    vector<int> groupsHighY = new vector<int>(1, 0);
+    vector<vector<int> > groupsLinks = 
+                             new vector<vector<int> >(1, new vector<int>(1, 0));
+    int numGroups = 0;
 
-    # Prevent big groups. Could probably be faster if integrated into CCA.
-    notGreen[0:notGreen.shape[0]:50] = 0
-    notGreen[:,0:notGreen.shape[1]:50] = 0
+    // Prevent big groups. Could probably be faster if integrated into CCA.
+    for(int y = 50; y < notGreen.size(); y += 50)
+    {
+        for(int x = 0; x < notGreen[y].size(); x++)
+        {
+            notGreen[y][x] = false;
+        }
+    }
+    for(int y = 0; y < notGreen.size(); y++)
+    {
+        for(int x = 0; x < notGreen[y].size(); x += 50)
+        {
+            notGreen[y][x] = false;
+        }
+    }
     
-    print("Green classification took: " + str(time.clock() - greenStart))
-    ccaStart = time.clock()
-    
-    # Connected component analysis (CCA).
-    for y in xrange(notGreen.shape[0]):
-        for x in xrange(notGreen.shape[1]):
+    // Connected component analysis.
+    for(int y = 0; y < notGreen.size(); y++)
+    {
+        for(int x = 0; x < notGreen[y].size(); x++)
+        {
             
             # If this is not a green pixel, group it.
-            if notGreen[y, x] == 1:
-                
+            if(notGreen[y][x] == true:
+            {
                 # Get all neighbours.
-                neighbours = []
-                if x > 0 and notGreen[y, x-1] == 1:
-                    neighbours.append(groups[y, x-1])
-                if x > 0 and y > 0 and notGreen[y-1, x-1] == 1:
-                    neighbours.append(groups[y-1, x-1])
-                if y > 0 and notGreen[y-1, x] == 1:
-                    neighbours.append(groups[y-1, x])
-                if x < notGreen.shape[1]-1 and y > 0 and \
-                                                        notGreen[y-1, x+1] == 1:
-                    neighbours.append(groups[y-1, x+1])
+                vector<int> neighbours = new vector<int>()
+                if(x > 0 && notGreen[y][x-1] == true):
+                    neighbours.push_back(groups[y][x-1])
+                if(x > 0 && y > 0 && notGreen[y-1][x-1] == true):
+                    neighbours.push_back(groups[y-1][x-1])
+                if(y > 0 && notGreen[y-1][x] == true):
+                    neighbours.push_back(groups[y-1][x])
+                if(x < notGreen[0].size()-1 && y > 0 && notGreen[y-1][x+1] == true):
+                    neighbours.push_back(groups[y-1][x+1])
                     
                 # If there are no neighbours create a new label.
                 if len(neighbours) == 0:
@@ -90,6 +153,9 @@ def ROIFindColour(im):
                     for label in neighbours:
                         if label != groups[y, x]:
                             groupsLinks[label].append(groups[y, x])
+            }
+        }
+    }
                             
     print("CCA took: " + str(time.clock() - ccaStart))
     

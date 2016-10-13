@@ -14,27 +14,45 @@ from skimage.feature import blob_doh
 import bisect
 import time
 
-def ROIFindColour(im):
+cimport numpy as np
+cimport cython
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef extern from "<vector>" namespace "std":
+    cdef cppclass vector[T]:
+        cppclass iterator:
+            T operator*()
+            iterator operator++()
+            bint operator==(iterator)
+            bint operator!=(iterator)
+        vector()
+        void push_back(T&)
+        T& operator[](int)
+        T& at(int)
+        iterator begin()
+        iterator end()
+
+def  ROIFindColour(baseIm):
     """
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
     """
     start = time.clock()
-    # Convert the image to a more usable format. A Nao version should be able to
-    # avoid this.
-    im = im.astype(np.float)
-    im /= 256
+    # Convert the image to C++ floats between 0 and 1.
+    cdef np.ndarray[int, ndim=1, mode="c"] imShape = baseIm.shape
+    cdef np.ndarray[float, ndim=3, mode="c"] im = baseIm.astype(np.float)/256
 
     greenStart = time.clock()
     
     # Estimate green.
-    green = np.median(im[300:im.shape[0]:5,0:im.shape[1]:5,:], (0,1))
+    cdef np.ndarray[float, ndim=1, mode="c"] green = np.median(im[300:im.shape[0]:5,0:im.shape[1]:5,:], (0,1))
 
     # Look for chunks of stuff that isn't green.
-    notGreen = np.sum(im - green, 2) > 0.5
+    cdef np.ndarray[int, ndim=2, mode="c"] notGreen = np.sum(im - green, 2) > 0.5
 
     # Slow in python, but would be fast on Nao in C++.
-    groups = np.zeros(notGreen.shape, np.int)
-    groupsCounts = [0]
+    cdef np.ndarray[int, ndim=2, mode="c"] groups = np.zeros(imShape[0:2], np.int)
+    cdef vector[int] groupsCounts = [0]
     groupsLowX = [0]
     groupsHighX = [0]
     groupsLowY = [0]
@@ -43,15 +61,15 @@ def ROIFindColour(im):
     numGroups = 0
 
     # Prevent big groups. Could probably be faster if integrated into CCA.
-    notGreen[0:notGreen.shape[0]:50] = 0
-    notGreen[:,0:notGreen.shape[1]:50] = 0
+    notGreen[0:imShape[0]:50] = 0
+    notGreen[:,0:imShape[1]:50] = 0
     
     print("Green classification took: " + str(time.clock() - greenStart))
     ccaStart = time.clock()
     
     # Connected component analysis (CCA).
-    for y in xrange(notGreen.shape[0]):
-        for x in xrange(notGreen.shape[1]):
+    for y in xrange(imShape[0]):
+        for x in xrange(imShape[1]):
             
             # If this is not a green pixel, group it.
             if notGreen[y, x] == 1:

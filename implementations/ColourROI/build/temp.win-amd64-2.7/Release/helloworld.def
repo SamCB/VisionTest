@@ -1,0 +1,3 @@
+LIBRARY helloworld.pyd
+EXPORTS
+inithelloworld

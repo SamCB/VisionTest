@@ -44,6 +44,7 @@ sys.path.insert(0, './implementations/ColourROI')
 sys.path.insert(0, './crop_functions')
 from ROIFindColour import ROIFindColour
 from harris_crop import retrieve_subsections
+from subarea_crop import subarea_crop
 from harris_crop import retrieve_output_subsections
 
 """
@@ -62,14 +63,16 @@ def initialise():
         passed.
     """
     
-    return retrieve_output_subsections
+    return filteredHarrisROI
     
 def filteredColourROI(im):
     
     finalROI = []
     roi = ROIFindColour(im)
     classificationTime = 0.0
+    numClass = 0
     for region in roi:
+        numClass += 1
         x = region[1]['x']
         y = region[1]['y']
         width = region[1]['width']
@@ -82,21 +85,27 @@ def filteredColourROI(im):
         classificationTime += time.clock()-classificationStart
         if classification[0] > 0.9:
             finalROI.append(region)
-    print("Classification Time: " + str(classificationTime))
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 def filteredHarrisROI(im):
     finalROI = []
     classificationTime = 0.0
     grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    for x, y, w, h in retrieve_subsections(grayIm):
+    numClass = 0
+    for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
+        numClass += 1
         classificationStart = time.clock()
         classification = net.run(im[y:y+h,x:x+w])
         classificationTime += time.clock()-classificationStart
-        if classification[0] > 0.9:
+        if classification[0] > 0.7 or classification[1] > 0.7 or classification[2] > 0.7:
             region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
-    print("Classification Time: " + str(classificationTime))
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 class Network():
