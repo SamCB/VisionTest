@@ -21,6 +21,19 @@ class Rectangle:
         self.name = name
 
     def draw(self, img, colour=COLOUR):
+        if self.name == "nothing":
+            return
+        if self.name == "ball":
+            colour=(255, 0, 0)
+        elif self.name == "ball_part":
+            colour = (255, 100, 100)
+        elif self.name == "nao":
+            colour = (0, 0, 255)
+        elif self.name == "nao_part":
+            colour = (100, 100, 255)
+        else:
+            colour = (0, 255, 255)
+
         cv2.rectangle(img,
                       (self.x, self.y),
                       (self.x + self.width, self.y + self.height),

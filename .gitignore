@@ -2,3 +2,4 @@
 *.jpg
 *.DS_Store
 cropped_ims*
+saved_classifier
