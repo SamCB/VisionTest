@@ -30,7 +30,21 @@ def retrieve_subsections(img):
     threshold[results>results.mean() * 1.01] = 255
 
     # Find the bounding box of each threshold, and yield the image
-    contours,_ = cv2.findContours(threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contour_response = cv2.findContours(threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+    # Different versions of cv2 return a different number of attributes
+    if len(contour_response) == 3:
+        contours = contour_response[1]
+    else:
+        contours = contour_response[0]
+
     for contour in contours:
         # x, y, w, h
         yield cv2.boundingRect(contour)
+
+def retrieve_output_subsections(img):
+    final_subsections = []
+    for x, y, w, h in retrieve_subsections(img):
+        subsection = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
+        final_subsections.append(subsection)
+    return final_subsections
