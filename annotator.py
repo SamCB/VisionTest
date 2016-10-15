@@ -64,6 +64,10 @@ def main(source, output_folder):
             h = classification["h"]
             subimg = img[y:y+h, x:x+w]
             filename = output_crop_name(output_element_dir, frame, idx, source_name, classification['class'])
+            i = 0
+            while os.path.isfile(filename):
+                filename = output_crop_name(output_element_dir, frame, idx, source_name, classification['class'], str(i))
+                i += 1
             cv2.imwrite(filename, subimg)
             classification["filename"] = filename
             classification["sourcename"] = source_name
@@ -172,9 +176,9 @@ def validate_output(output):
     try_make_dir(output_dir)
     return output_file, output_dir
 
-def output_crop_name(directory, frame, idx, original_file, class_):
+def output_crop_name(directory, frame, idx, original_file, class_, addition=""):
     original_file_name_only, _ = os.path.splitext(os.path.split(original_file)[1])
-    return os.path.join(directory, "{}-{}-{}-{:04d}.jpg".format(class_, original_file_name_only, frame, idx))
+    return os.path.join(directory, "{}-{}-{}-{:04d}{}.jpg".format(class_, original_file_name_only, frame, idx, addition))
 
 def try_make_dir(directory):
     try:
