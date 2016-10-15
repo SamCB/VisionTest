@@ -1,0 +1,26 @@
+{ "scikit_and_video":{
+    "function": [
+      "implementations/scikit/scikit.py",
+      "RandomForest",
+      "implementations/scikit/feature_processors/greyscale_histogram_processor.py",
+      "../vision_test_files/automated_crop_classifications"
+    ],
+    "input": [
+      "video.py",
+      "../vision_test_files/more_tests/IMG_2133.m4v",
+      "s0.25"
+    ]
+  },
+  "scikit_and_camera":{
+    "function": [
+      "implementations/scikit/scikit.py",
+      "RandomForest",
+      "implementations/scikit/feature_processors/greyscale_histogram_processor.py",
+      "../vision_test_files/automated_crop_classifications"
+    ],
+    "input": [
+      "camera.py",
+      "s0.5"
+    ]
+  }
+}
