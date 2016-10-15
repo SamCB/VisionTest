@@ -30,6 +30,28 @@ If a module requires initialisation arguments, they can be provided with the `-f
 python main.py example_implementations/random_function.py imageset.py -i ../sunny_field_raw/ -i lazy
 ```
 
+## Using setup file
+
+Instead of using really long command line argument, you can fill out the setup file and use `main_composed.py`.
+
+```json
+{
+    "setup_name": {
+        "function": ["function.py", "any", "other", "args"],
+        "input": ["input.py", "more arguments"],
+        "annotations": ["annotations_no_args.py"]
+    },
+    "another_setup": {
+        "function": ["something.py"],
+        "input": ["input.py", "foo.m4v"]
+    }
+}
+```
+
+```
+python main_composed.py setup.json setup_method_name
+```
+
 ## Writing your own function
 
 We expect a single function `initialise()` which takes no arguments, and returns a method that we can call and pass images into.
