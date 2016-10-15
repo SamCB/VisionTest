@@ -35,7 +35,7 @@ def import_module(name):
 
 def main(function, function_args,
          img_input, input_args,
-         annotations=None, annotation_args=None, kwargs=None):
+         annotations=None, annotation_args=None, **kwargs):
     get_answer = import_module(function).initialise(*function_args)
     camera = import_module(img_input).initialise(*input_args)
     if annotations:
@@ -138,7 +138,7 @@ Alternatively, save your setup in setup.json like so:
         "setup_name": {{
             "function": ["function.py", "any", "other", "args"],
             "input": ["input.py", "more arguments"],
-            "annotations": "can_be_called_as_string_with_no_args.py"
+            "annotations": ["annotations_no_args.py"]
         }},
         "another_setup": {{
             ...
@@ -167,7 +167,8 @@ For quick, easy usage.
 
     subparser = parser.add_subparsers(
         title='setup method',
-        description='should we use setup files or the command line for setup?'
+        description='should we use setup files or the command line for setup?',
+        dest='setup'
     )
     #
     # Arguments for using setup.json
@@ -215,8 +216,28 @@ For quick, easy usage.
 
     args = parser.parse_args()
 
-    print(args)
-    # main(args.function, args.farg,
-    #      args.input, args.iarg,
-    #      args.annotations, args.aarg,
-    #      vars(args))
+    if args.setup == "cl": # Command Line
+        main(args.function, args.farg,
+             args.input, args.iarg,
+             args.annotations, args.aarg,
+             silent=args.silent,
+             save=args.save)
+
+    elif args.setup == "sf": # Setup File
+        import json
+        with open(args.setup_file, "r") as f:
+            setup = json.load(f)
+        setup_method = setup[args.setup_method]
+
+        function, fargs = setup_method['function'][0], setup_method['function'][1:]
+        img_input, iargs = setup_method['input'][0], setup_method['input'][1:]
+        if 'annotations' in setup_method:
+            annotation, aargs = setup_method['annotations'][0], setup_method['annotations'][1:]
+        else:
+            annotation, aargs = None, []
+
+        main(function, fargs,
+             img_input, iargs,
+             annotation, aargs,
+             silent=args.silent,
+             save=args.save)
