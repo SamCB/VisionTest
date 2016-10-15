@@ -5,7 +5,7 @@ import os
 from image_utils import resize
 
 def initialise(directory, *args):
-    lazy, scale, rate = False, 1., 1
+    lazy, scale, rate, continue_from = False, 1., 1, 0
     for arg in args:
         if arg == "lazy":
             lazy = True
@@ -13,18 +13,20 @@ def initialise(directory, *args):
             scale = float(arg[1:])
         elif arg[0] == "r":
             rate = int(arg[1:])
+        elif arg[0] == "c":
+            continue_from = int(arg[1:])
 
     if lazy:
-        return LazyImageSetInput(directory, scale, rate).read
+        return LazyImageSetInput(directory, scale, rate, continue_from).read
     else:
-        return ImageSetInput(directory, scale, rate).read
+        return ImageSetInput(directory, scale, rate, continue_from).read
 
 class ImageSetInput():
 
-    def __init__(self, directory, scale, rate):
+    def __init__(self, directory, scale, rate, continue_from):
         self.images = []
         # if rate == 1, every element, otherwise every 'rate' image
-        file_list = os.listdir(directory)[::rate]
+        file_list = os.listdir(directory)[continue_from::rate]
         count = 0
         print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
         for filename in file_list:
@@ -41,23 +43,25 @@ class ImageSetInput():
 
 
         print("Finished Loading {} Images".format(len(self.images)))
-        self._index = 0
+        self._index = continue_from
+        self.rate = rate
 
     def read(self):
         try:
             image = self.images[self._index]
         except IndexError:
             return None
-        self._index += 1
+        self._index += self.rate
         return image
 
 class LazyImageSetInput():
 
-    def __init__(self, directory, scale, rate):
+    def __init__(self, directory, scale, rate, continue_from):
         self.directory = directory
-        self.file_list = os.listdir(directory)[::rate]
+        self.file_list = os.listdir(directory)[continue_from::rate]
         self.scale = scale
-        self._index = 0
+        self._index = continue_from
+        self.rate = rate
         print("Image settings: Scale: {}, Directory: {}".format(scale, directory))
 
     def read(self):
@@ -66,7 +70,7 @@ class LazyImageSetInput():
                 filename = self.file_list[self._index]
             except IndexError:
                 return None
-            self._index += 1
+            self._index += self.rate
 
             full_path = os.path.join(self.directory, filename)
             rel_path = os.path.relpath(full_path)
