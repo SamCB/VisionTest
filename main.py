@@ -132,25 +132,7 @@ arguments into the annotation initialiser
 
 ---- Setup File ----
 
-Alternatively, save your setup in setup.json like so:
-
-    {{
-        "setup_name": {{
-            "function": ["function.py", "any", "other", "args"],
-            "input": ["input.py", "more arguments"],
-            "annotations": ["annotations_no_args.py"]
-        }},
-        "another_setup": {{
-            ...
-        }},
-        ...
-    }}
-
-And call the function with:
-
-    python {name} sf setup.json setup_name
-
-For quick, easy usage.
+Alternatively, for easier usage, use main_composed.py and setup.json
 """.format(name=__file__)
     parser = argparse.ArgumentParser(description=description, epilog=epilog,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -165,28 +147,7 @@ For quick, easy usage.
         '-v', '--save', dest='save', action='store_true',
         help='save cropped images during testing')
 
-    subparser = parser.add_subparsers(
-        title='setup method',
-        description='should we use setup files or the command line for setup?',
-        dest='setup'
-    )
-    #
-    # Arguments for using setup.json
-    #
-    setup_file = subparser.add_parser('sf', help='use the setup file')
-    setup_file.add_argument(
-        "setup_file", help="json file containing setup method we want"
-    )
-    setup_file.add_argument(
-        "setup_method", help="method in the setup_file to use"
-    )
-
-    #
-    # Arguments for using command line setup
-    #
-    command_line_group = subparser.add_parser('cl', help='use the command line')
-
-    function_group = command_line_group.add_argument_group('function group')
+    function_group = parser.add_argument_group('function group')
     function_group.add_argument(
         "function", help="module containing method for performing CV analysis"
     )
@@ -195,7 +156,7 @@ For quick, easy usage.
         help="arguments to pass to the function module initialiser"
     )
 
-    input_group = command_line_group.add_argument_group('input group')
+    input_group = parser.add_argument_group('input group')
     input_group.add_argument(
         "input", help="module that provides image frames for the analysis"
     )
@@ -204,7 +165,7 @@ For quick, easy usage.
         help="arguments to pass to the input module initialiser"
     )
 
-    annotations_group = command_line_group.add_argument_group('annotations group')
+    annotations_group = parser.add_argument_group('annotations group')
     annotations_group.add_argument(
         "annotations", nargs="?", default=None,
         help="module returning the correct annotations for given images"
@@ -216,28 +177,8 @@ For quick, easy usage.
 
     args = parser.parse_args()
 
-    if args.setup == "cl": # Command Line
-        main(args.function, args.farg,
-             args.input, args.iarg,
-             args.annotations, args.aarg,
-             silent=args.silent,
-             save=args.save)
-
-    elif args.setup == "sf": # Setup File
-        import json
-        with open(args.setup_file, "r") as f:
-            setup = json.load(f)
-        setup_method = setup[args.setup_method]
-
-        function, fargs = setup_method['function'][0], setup_method['function'][1:]
-        img_input, iargs = setup_method['input'][0], setup_method['input'][1:]
-        if 'annotations' in setup_method:
-            annotation, aargs = setup_method['annotations'][0], setup_method['annotations'][1:]
-        else:
-            annotation, aargs = None, []
-
-        main(function, fargs,
-             img_input, iargs,
-             annotation, aargs,
-             silent=args.silent,
-             save=args.save)
+    main(args.function, args.farg,
+         args.input, args.iarg,
+         args.annotations, args.aarg,
+         silent=args.silent,
+         save=args.save)
