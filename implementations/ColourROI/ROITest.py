@@ -64,7 +64,7 @@ def initialise(*args):
         passed.
     """
     
-    return naive_harris_initialise(*args)
+    return filteredHarrisROI
     
 def filteredColourROI(im):
     
@@ -97,13 +97,17 @@ def filteredHarrisROI(im):
     grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     numClass = 0
     for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
-        numClass += 1
-        classificationStart = time.clock()
-        classification = net.run(im[y:y+h,x:x+w])
-        classificationTime += time.clock()-classificationStart
-        if classification[10] > 0.7 or classification[11] > 0.7 or classification[12] > 0.7:
-            region = ('Nao', {'height': h, 'width': w, 'x': x, 'y': y})
-            finalROI.append(region)
+        image = im[y:y+h,x:x+w]
+        imShape = image.shape
+        if float(imShape[1])/float(imShape[0]) < 3.0 and \
+                                      float(imShape[0])/float(imShape[1]) < 3.0:
+            numClass += 1
+            classificationStart = time.clock()
+            classification = net.run(image)
+            classificationTime += time.clock()-classificationStart
+            if classification[0] > 0.7 or classification[1] > 0.7:
+                region = ('Ball', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
     print("Number of classifications: " + str(numClass))
     print("Total classification time: " + str(classificationTime))
     print("Average classification time: " + str(classificationTime/float(numClass)))

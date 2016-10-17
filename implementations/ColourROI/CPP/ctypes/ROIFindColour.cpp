@@ -9,6 +9,10 @@ Created on Fri Oct 07 10:22:53 2016
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
+#include <string>
+
+#include "ROIFindColour.h"
 
 using namespace std;
 
@@ -17,23 +21,24 @@ typedef vector<vector<float> > vector2f;
 typedef vector<vector<bool> > vector2b;
 typedef vector<vector<int> > vector2i;
 
-vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
+int** ROIFindColour(float* baseIm, int* shape, int* numRegions)
 {
     /*
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
     */
 
     // Convert the image to a more usable format.
-    vector3f im(baseIm.size());
-    for(int y = 0; y < baseIm.size(); y++)
+    vector3f im(shape[0]);
+    for(int y = 0; y < shape[0]; y++)
     {
-        im[y] = vector2f(baseIm[y].size());
-        for(int x = 0; x < baseIm[y].size(); x++)
+        im[y] = vector2f(shape[1]);
+        for(int x = 0; x < shape[1]; x++)
         {
-            im[y][x] = vector<float>(baseIm[y][x].size());
-            for(int c = 0; c < baseIm[y][x].size(); c++)
+            im[y][x] = vector<float>(shape[2]);
+            for(int c = 0; c < shape[2]; c++)
             {
-                im[y][x][c] = (float)baseIm[y][x][c]/256.0;
+                im[y][x][c] = (float)baseIm[
+                                    y*shape[1]*shape[2] + x*shape[2] + c]/256.0;
             }
         }
     }
@@ -60,8 +65,12 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         sort(samples[c].begin(), samples[c].end());
         if(samples[c].size()%2 == 0)
         {
-            green[c] = (samples[samples[c].size()/2-1][c] + 
-                                             samples[samples[c].size()/2][c])/2;
+            green[c] = (samples[c][samples[c].size()/2-1] + 
+                                             samples[c][samples[c].size()/2])/2;
+        }
+        else
+        {
+            green[c] = samples[c][samples[c].size()/2];
         }
     }
 
@@ -71,6 +80,7 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
     {
         notGreen[y] = vector<bool>(im[0].size());
     }
+    int notGreenCount = 0;
     for(int y = 0; y < im.size(); y++)
     {
         for(int x = 0; x < im[y].size(); x++)
@@ -79,15 +89,18 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
             notGreen[y][x] = (abs(im[y][x][0]-green[0]) + 
                              abs(im[y][x][1]-green[1]) +
                                                abs(im[y][x][2]-green[2])) > 0.5;
+            if(notGreen[y][x])
+                notGreenCount++;
         }
     }
+    
+    // cout << "Not Green Count: " << notGreenCount << " of " << shape[0]*shape[1]
+    //                                                                    << endl;
 
     // Connected component analysis preparation.
     vector2i groups(im.size());
     for(int y = 0; y < im.size(); y++)
-    {
         groups[y] = vector<int>(im[y].size(), 0);
-    }
     vector<int> groupCounts(1, 0);
     vector<int> groupLowXs(1, 0);
     vector<int> groupHighXs(1, 0);
@@ -101,6 +114,8 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
     {
         for(int x = 0; x < notGreen[y].size(); x++)
         {
+            if(notGreen[y][x])
+                notGreenCount--;
             notGreen[y][x] = false;
         }
     }
@@ -108,9 +123,14 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
     {
         for(int x = 0; x < notGreen[y].size(); x += 50)
         {
+            if(notGreen[y][x])
+                notGreenCount--;
             notGreen[y][x] = false;
         }
     }
+    
+    // cout << endl << "Not Green Count: " << notGreenCount << " of " << 
+    // shape[0]*shape[1] << endl;
     
     // Connected component analysis.
     for(int y = 0; y < notGreen.size(); y++)
@@ -123,14 +143,13 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
             {
                 // Get all neighbours.
                 vector<int> neighbours;
-                if(x > 0 && notGreen[y][x-1] == true)
+                if(x > 0 && notGreen[y][x-1])
                     neighbours.push_back(groups[y][x-1]);
-                if(x > 0 && y > 0 && notGreen[y-1][x-1] == true)
+                if(x > 0 && y > 0 && notGreen[y-1][x-1])
                     neighbours.push_back(groups[y-1][x-1]);
-                if(y > 0 && notGreen[y-1][x] == true)
+                if(y > 0 && notGreen[y-1][x])
                     neighbours.push_back(groups[y-1][x]);
-                if(x < notGreen[0].size()-1 && y > 0 && 
-                                                     notGreen[y-1][x+1] == true)
+                if(x < notGreen[0].size()-1 && y > 0 && notGreen[y-1][x+1])
                     neighbours.push_back(groups[y-1][x+1]);
                     
                 // If there are no neighbours create a new label.
@@ -170,7 +189,9 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
             }
         }
     }
-
+    
+    // cout << "Number of groups: " << numGroups << endl;
+    
     // Don't need a full second pass as we only need bounding boxes. Combining
     // by grabbing pixel location extremes is sufficient. May be a faster way
     // to implement this.
@@ -180,24 +201,29 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
     while(changed)
     {
         changed = false;
-        for(int group=0; group<groupLinks.size(); group++)
+        for(int group=1; group<groupLinks.size(); group++)
         {
             // Tell all linked groups the lowest linked group.
             for(int owner=1; owner<groupLinks[group].size(); owner++)
             {
                 changed = true;
                 // Insert in sorted order.
-                groupLinks[groupLinks[group][owner]].insert(upper_bound(
-                    groupLinks[groupLinks[group][owner]].begin(),
-                    groupLinks[groupLinks[group][owner]].end(),
-                                  groupLinks[group][0]), groupLinks[group][0]);
+                if(groupLinks[group][owner] != group)
+                {
+                    groupLinks[groupLinks[group][owner]].insert(upper_bound(
+                        groupLinks[groupLinks[group][owner]].begin(),
+                        groupLinks[groupLinks[group][owner]].end(),
+                                   groupLinks[group][0]), groupLinks[group][0]);
+                }
             }
             
             // Delete all but the lowest owner.
             groupLinks[group] = vector<int>(1, groupLinks[group][0]);
         }
     }
-            
+    
+    // cout << "Groups linked" << endl;
+    
     // Apply combinations.
     for(int group=groupLinks.size()-1; group>=0; group--)
     {
@@ -265,6 +291,8 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         }
     }
 
+    // cout << "Groups merged" << endl;
+    
     // Create ROI from every relevant group.
     vector2i roi;
     for(int group=1; group<numGroups+1; group++)
@@ -303,11 +331,19 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         }
     }
     
+    // Make a pointer version for return.
+    int** data = new int*[roi.size()];
+    for(int item=0; item<roi.size(); item++)
+        data[item] = roi[item].data();
+    
+    // cout << "ROI found: " << roi.size() << endl;
+    
+    // Tell python how many ROI were found.
+    *numRegions = roi.size();
+
     // Return the ROI found.
-    return(roi);
+    return(data);
 }
-
-
 
 
 
