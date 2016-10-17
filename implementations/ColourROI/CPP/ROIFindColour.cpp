@@ -1,14 +1,20 @@
-/*
-Created on Fri Oct 07 10:22:53 2016
 
+/*Created on Fri Oct 07 10:22:53 2016
 @author: Ethan Jones
 */
 
+#include <boost/python/detail/wrap_python.hpp>
+#include <numpy/ndarrayobject.h>
+#include <boost/python.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 #include <vector>
 #include <cstdint>
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
+#include <ctime>
 
 using namespace std;
 
@@ -17,27 +23,32 @@ typedef vector<vector<float> > vector2f;
 typedef vector<vector<bool> > vector2b;
 typedef vector<vector<int> > vector2i;
 
-vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
+vector<int> ROIFindColour(cv::Mat baseIm)
 {
     /*
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
     */
+    clock_t begin_time = clock();
 
     // Convert the image to a more usable format.
-    vector3f im(baseIm.size());
-    for(int y = 0; y < baseIm.size(); y++)
+    vector3f im(baseIm.size[0]);
+    for(int y = 0; y < baseIm.size[0]; y++)
     {
-        im[y] = vector2f(baseIm[y].size());
-        for(int x = 0; x < baseIm[y].size(); x++)
+        im[y] = vector2f(baseIm.size[1]);
+        for(int x = 0; x < baseIm.size[1]; x++)
         {
-            im[y][x] = vector<float>(baseIm[y][x].size());
-            for(int c = 0; c < baseIm[y][x].size(); c++)
+            im[y][x] = vector<float>(baseIm.channels());
+            cv::Vec3b colour = baseIm.at<cv::Vec3b>(y, x);
+            for(int c = 0; c < baseIm.channels(); c++)
             {
-                im[y][x][c] = (float)baseIm[y][x][c]/256.0;
+                im[y][x][c] = (float)(colour.val[c])/256.0;
             }
         }
     }
     
+    std::cout << "copy time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
+
     // Estimate green as median of a sample from the bottom of the image.
     // Certainly not very efficient, but it'll do for now.
     vector2f samples(3);
@@ -60,10 +71,17 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         sort(samples[c].begin(), samples[c].end());
         if(samples[c].size()%2 == 0)
         {
-            green[c] = (samples[samples[c].size()/2-1][c] + 
-                                             samples[samples[c].size()/2][c])/2;
+            green[c] = (samples[c][samples[c].size()/2-1] + 
+                                             samples[c][samples[c].size()/2])/2;
+        } 
+        else
+        {
+           green[c] = samples[c][samples[c].size()/2];
         }
     }
+
+    std::cout << "green sample time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
 
     // Look for chunks of stuff that isn't green.
     vector2b notGreen(im.size());
@@ -82,11 +100,15 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         }
     }
 
+    std::cout << "not green time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
+
     // Connected component analysis preparation.
     vector2i groups(im.size());
     for(int y = 0; y < im.size(); y++)
     {
-        notGreen[y] = vector<bool>(im[0].size());
+        //notGreen[y] = vector<bool>(im[0].size());
+        groups[y] = vector<int>(im[y].size(), 0);
     }
     vector<int> groupCounts(1, 0);
     vector<int> groupLowXs(1, 0);
@@ -111,6 +133,9 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
             notGreen[y][x] = false;
         }
     }
+
+    std::cout << "cc prep time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
     
     // Connected component analysis.
     for(int y = 0; y < notGreen.size(); y++)
@@ -171,6 +196,9 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         }
     }
 
+    std::cout << "cc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
+
     // Don't need a full second pass as we only need bounding boxes. Combining
     // by grabbing pixel location extremes is sufficient. May be a faster way
     // to implement this.
@@ -187,10 +215,13 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
             {
                 changed = true;
                 // Insert in sorted order.
-                groupLinks[groupLinks[group][owner]].insert(upper_bound(
-                    groupLinks[groupLinks[group][owner]].begin(),
-                    groupLinks[groupLinks[group][owner]].end(),
-                                  groupLinks[group][0]), groupLinks[group][0]);
+                if(groupLinks[group][owner] != group) 
+                {
+                    groupLinks[groupLinks[group][owner]].insert(upper_bound(
+                        groupLinks[groupLinks[group][owner]].begin(),
+                        groupLinks[groupLinks[group][owner]].end(),
+                                      groupLinks[group][0]), groupLinks[group][0]);
+                }
             }
             
             // Delete all but the lowest owner.
@@ -216,6 +247,9 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
                 groupHighYs[owner] = groupHighYs[group];
         }
     }
+
+    std::cout << "parent finding time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
 
     // Merge groups where density remains good.
     changed = true;
@@ -265,8 +299,12 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
         }
     }
 
+    std::cout << "merge group time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
+
     // Create ROI from every relevant group.
-    vector2i roi;
+    //vector2i roi;
+    std::vector<int> roi;
     for(int group=1; group<numGroups+1; group++)
     {
         // Check the group actually has pixels.
@@ -293,76 +331,61 @@ vector2i ROIFindColour(vector<vector<vector<uint8_t> > > baseIm)
                 if(abs((float)(width)/(float)(height) - 1.0) < 0.1)
                 {
                     // Create a region of interest.
-                    roi.push_back(vector<int>(4));
-                    roi[roi.size()-1][0] = height;
-                    roi[roi.size()-1][1] = width;
-                    roi[roi.size()-1][2] = groupLowXs[group];
-                    roi[roi.size()-1][3] = groupLowYs[group];
+                    // roi.push_back(vector<int>(4));
+                    // roi[roi.size()-1][0] = height;
+                    // roi[roi.size()-1][1] = width;
+                    // roi[roi.size()-1][2] = groupLowXs[group];
+                    // roi[roi.size()-1][3] = groupLowYs[group];
+                    roi.push_back(height);
+                    roi.push_back(width);
+                    roi.push_back(groupLowXs[group]);
+                    roi.push_back(groupLowYs[group]);
                 }
             }
         }
     }
+    std::cout << "roi creation time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
     
     // Return the ROI found.
     return(roi);
 }
 
+// wrap c++ array as numpy array
+static boost::python::object vectorWrapper (cv::Mat baseIm) {
+    const clock_t begin_time = clock();
+    std::vector<int> const& vec = ROIFindColour(baseIm);
+    std::cout << "overall c++ runtime: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    npy_intp size = vec.size();
 
+     // const_cast is rather horrible but we need a writable pointer
+     //   in C++11, vec.data() will do the trick
+     //   but you will still need to const_cast
+     
 
+    int * data = size ? const_cast<int *>(&vec[0]) 
+    : static_cast<int *>(NULL); 
 
+    PyObject * pyObj = PyArray_SimpleNewFromData( 1, &size, NPY_INT, data );
+    boost::python::handle<> handle( pyObj );
+    boost::python::numeric::array arr( handle );
 
+     // The problem of returning arr is twofold: firstly the user can modify
+     //   the data which will betray the const-correctness 
+     //   Secondly the lifetime of the data is managed by the C++ API and not the 
+     //   lifetime of the numpy array whatsoever. But we have a simple solution..
+     
 
+    return arr.copy(); // copy the object. numpy owns the copy now.
+}
 
+using namespace boost::python;
 
+BOOST_PYTHON_MODULE(colourROI)
+{
+    import_array();
+    numeric::array::set_module_and_type("numpy", "ndarray");
 
+    //conversion requires https://github.com/Algomorph/pyboostcvconverter
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def("ROIFindColour", vectorWrapper);
+}
