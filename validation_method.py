@@ -33,6 +33,14 @@ class Validations:
                 if annotation.is_equal(element[1]):
                     annotation.add_reference(element[0], element[1])
 
+    def retrieve_results(self):
+        expected = []
+        actuall = []
+        for annotation in self.annotations:
+            pass
+        return None, None
+
+
     @staticmethod
     def _is_original_annotation(element):
         return 'annotations' in element
@@ -232,7 +240,8 @@ def test():
              ("ball_part", {"x": 533, "y": 279, "width": 15, "height": 12}),
              ("ball_part", {"x": 518, "y": 263, "width": 5, "height": 15}),
              ("ball_part", {"x": 533, "y": 279, "width": -10, "height": -10}),
-             ("corner_part", {"x": 271, "y": 120, "width": 5, "height": 5})]
+             ("corner_part", {"x": 271, "y": 120, "width": 5, "height": 5}),
+             ("nao", {"x": 15, "y": 500, "width": 150, "height": 300})]
         )
 
         print "TEST: check comparison sets for first image"
@@ -249,13 +258,25 @@ def test():
             else:
                 raise AssertionError("Unknown class: {}".format(comparison.class_))
 
+        print "TEST: retrieving results"
+        expected, actual = validator.retrieve_results()
+        a_expected = ["ball", "corner", "ball", "corner",
+                      "intersection_t", "ball", "intersection_t", "ball",
+                      "nothing"]
+        a_actual = ["ball", "corner", "ball", "corner",
+                    "nothing", "nothing", "nothing", "nothing",
+                    "nao"]
+        assert expected == a_expected, "Expected: {}\nGot:      {}".format(a_expected, expected)
+        assert actual == a_actual, "Expected: {}\nGot:      {}".format(a_actual, actual)
+
         print "TEST: add elements that take up entire comparison set"
         # New validator
         validator = Validations([test_filename_A, test_filename_B])
         validator.validate_elements(
             "../vision_test_files/sunny_field_raw/0.jpg",
             [("ball", {"x": 500, "y": 262, "h": 60, "w": 70}),
-             ("corner", {"x": 270, "y": 122, "h": 19, "w": 21})]
+             ("corner", {"x": 270, "y": 122, "h": 19, "w": 21}),
+             ("nao", {"x": 15, "y": 500, "width": 150, "height": 300})]
         )
 
         print "TEST: check comparison sets for first image"
@@ -272,7 +293,16 @@ def test():
             else:
                 raise AssertionError("Unknown class: {}".format(comparison.class_))
 
-
+        print "TEST: retrieving results"
+        expected, actual = validator.retrieve_results()
+        a_expected = ["ball", "corner", "ball", "corner",
+                      "intersection_t", "ball", "intersection_t", "ball",
+                      "nothing"]
+        a_actual = ["ball", "corner", "ball", "corner",
+                    "nothing", "nothing", "nothing", "nothing",
+                    "nao"]
+        assert expected == a_expected, "Expected: {}\nGot:      {}".format(a_expected, expected)
+        assert actual == a_actual, "Expected: {}\nGot:      {}".format(a_actual, actual)
 
     except:
         print "==========="
@@ -297,6 +327,4 @@ def test():
             print "Unable to remove file: {}.\n{}".format(test_filename_B, e)
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) == 2 and sys.argv[1] == "t":
-        test()
+    test()
