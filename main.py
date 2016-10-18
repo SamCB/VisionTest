@@ -7,6 +7,7 @@ import argparse
 from pprint import pprint
 import os
 import numpy as np
+import time
 
 import cv2
 
@@ -52,6 +53,8 @@ def main(function, function_args,
     im_count = 1
 
     while True:
+        startFrame = time.clock()
+    
         # Retrieve image and description from our image input
         response = camera()
         if response is None:
@@ -62,6 +65,8 @@ def main(function, function_args,
             img, desc = response
 
         # Retrieve estimation from our function
+        #img = cv2.transpose(img)
+        #img = cv2.flip(img, 1)
         results = get_answer(img)
 
         # Compare our estimation if we're expecting it
@@ -92,6 +97,9 @@ def main(function, function_args,
 
             if cv2.waitKey(1) == 27:
                 break
+        
+        print("Frame time: " + str(time.clock()-startFrame))
+        print("FPS: " + str(1.0/(time.clock()-startFrame)))
 
     if show_img:
         cv2.destroyAllWindows()

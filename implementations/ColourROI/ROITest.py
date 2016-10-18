@@ -41,9 +41,11 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.insert(0, './implementations/ColourROI')
+sys.path.insert(0, './implementations/ColourROI/CPP/ctypes')
 sys.path.insert(0, './example_implementations')
 sys.path.insert(0, './crop_functions')
-from ROIFindColour import ROIFindColour
+from ROIFindColourCPP import ROIFindColour
+#from ROIFindColour import ROIFindColour
 from harris_crop import retrieve_subsections
 from subarea_crop import subarea_crop
 from naive_harris_function import initialise as naive_harris_initialise
@@ -64,7 +66,7 @@ def initialise(*args):
         passed.
     """
     
-    return filteredHarrisROI
+    return ROIFindColour
     
 def filteredColourROI(im):
     

@@ -16,8 +16,6 @@ Created on Fri Oct 07 10:22:53 2016
 
 #include "ROIFindColour.h"
 
-#define ABS False
-
 using namespace std;
 
 typedef vector<vector<vector<float> > > vector3f;
@@ -25,18 +23,17 @@ typedef vector<vector<float> > vector2f;
 typedef vector<vector<bool> > vector2b;
 typedef vector<vector<int> > vector2i;
 
-void ROIFindColour(const float* im, const int* shape, int* numRegions, 
-                                                                int out[100][4])
+int** ROIFindColour(float* baseIm, int* shape, int* numRegions)
 {
     /*
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
     */
 
-    //clock_t begin_time = clock();
-    //clock_t fullTime = clock();
+    clock_t begin_time = clock();
+    clock_t fullTime = clock();
     
     // Convert the image to a more usable format.
-    /*vector3f im(shape[0], vector2f(shape[1], vector<float>(shape[2])));
+    vector3f im(shape[0], vector2f(shape[1], vector<float>(shape[2])));
     for(int y = 0; y < shape[0]; y++)
     {
         for(int x = 0; x < shape[1]; x++)
@@ -47,14 +44,10 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
                                     y*shape[1]*shape[2] + x*shape[2] + c]/256.0;
             }
         }
-    }*/
-    const int mult1 = shape[1]*shape[2];
-    const int mult2 = shape[2];
-    const int fMult1 = shape[1];
-    const int numPixels = shape[0]*shape[1];
+    }
     
-    //std::cout << "copy time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    //begin_time = clock();
+    std::cout << "copy time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
     
     // Estimate green as median of a sample from the bottom of the image.
     // Certainly not very efficient, but it'll do for now.
@@ -62,13 +55,13 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
     samples[0] = vector<float>();
     samples[1] = vector<float>();
     samples[2] = vector<float>();
-    for(int y = 300; y < shape[0]; y += 5)
+    for(int y = 300; y < im.size(); y += 5)
     {
-        for(int x = 0; x < shape[1]; x += 5)
+        for(int x = 0; x < im[y].size(); x += 5)
         {
-            for(int c = 0; c < shape[2]; c++)
+            for(int c = 0; c < im[y][x].size(); ++c)
             {
-                samples[c].push_back(im[y*mult1 + x*mult2 + c]);
+                samples[c].push_back(im[y][x][c]);
             }
         }
     }
@@ -87,39 +80,34 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
         }
     }
 
-    //std::cout << "green sample time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    //begin_time = clock();
+    std::cout << "green sample time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    begin_time = clock();
     
     // Look for chunks of stuff that isn't green.
-    vector2b notGreen(shape[0], vector<bool>(shape[1]));
+    vector2b notGreen(im.size(), vector<bool>(im[0].size()));
+    cout << "not green alloc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
     int notGreenCount = 0;
-    for(int y = 0; y < shape[0]; y++)
+    for(int y = 0; y < im.size(); y++)
     {
-        for(int x = 0; x < shape[1]; x++)
+        for(int x = 0; x < im[y].size(); x++)
         {
             // This was bugged (no abs) in the original.
-#if ABS
-            notGreen[y][x] = (abs(im[y*mult1 + x*mult2]-green[0]) + 
-                              abs(im[y*mult1 + x*mult2 + 1]-green[1]) +
-                               abs(im[y*mult1 + x*mult2 + 2]-green[2])) > 128.0;
-#else
-            notGreen[y][x] = ((im[y*mult1 + x*mult2]-green[0]) + 
-                              (im[y*mult1 + x*mult2 + 1]-green[1]) +
-                                  (im[y*mult1 + x*mult2 + 2]-green[2])) > 128.0;
-#endif // ABS
+            notGreen[y][x] = (abs(im[y][x][0]-green[0]) + 
+                             abs(im[y][x][1]-green[1]) +
+                                               abs(im[y][x][2]-green[2])) > 0.5;
             if(notGreen[y][x])
                 notGreenCount++;
         }
     }
     
-    //cout << "not green time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //begin_time = clock();
+    cout << "not green time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    begin_time = clock();
     
     //cout << "Not Green Count: " << notGreenCount << " of " << shape[0]*shape[1]
     //                                                                    << endl;
 
     // Connected component analysis preparation.
-    vector2i groups(shape[0], vector<int>(shape[1], 0));
+    vector2i groups(im.size(), vector<int>(im[0].size(), 0));
     vector<int> groupCounts(1, 0);
     groupCounts.reserve(1000);
     vector<int> groupLowXs(1, 0);
@@ -154,34 +142,33 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
         }
     }
     
-    //cout << endl << "Not Green Count: " << notGreenCount << " of " << 
-    //                                                  shape[0]*shape[1] << endl;
+    cout << endl << "Not Green Count: " << notGreenCount << " of " << 
+                                                      shape[0]*shape[1] << endl;
     
-    //cout << "cc prep time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //begin_time = clock();
-    
-    //float totalAllocationTime = 0;
-    //clock_t allocTimeStart = 0;
-    //clock_t allocTimeStart2 = 0;
-    //float connTime = 0;
-    //float insertTime = 0;
-    //float newGroupTime = 0;
-    //float ifTime = 0;
-    //int loopCount = 0;
-    //clock_t t3 = 0;
-    //float timeT3 = 0;
+    cout << "cc prep time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    begin_time = clock();
+    float totalAllocationTime = 0;
+    clock_t allocTimeStart = 0;
+    clock_t allocTimeStart2 = 0;
+    float connTime = 0;
+    float insertTime = 0;
+    float newGroupTime = 0;
+    float ifTime = 0;
+    int loopCount = 0;
+    bool hasNeighbour = false;
+    clock_t t3 = 0;
+    float timeT3 = 0;
     
     // High so that they will not be smallest group.
     int topNeighbour = INT_MAX; 
     int leftNeighbour = INT_MAX;
-    bool hasNeighbour = false;
     
     // Connected component analysis.
     for(int y = 0; y < notGreen.size(); y++)
     {
         for(int x = 0; x < notGreen[y].size(); x++)
         {
-            //loopCount++;
+            loopCount++;
             
             // If this is not a green pixel, group it.
             if(notGreen[y][x] == true)
@@ -276,19 +263,18 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
             }
         }
     }
-    //cout << "Loop Count: " << loopCount << endl;
-    //cout << "Allocation time: " << totalAllocationTime << endl;
-    //cout << "Time %: " << (totalAllocationTime/(float(clock()-begin_time) /  CLOCKS_PER_SEC))*100 << endl;
-    //cout << "Connection creation time: " << connTime << endl;
-    //cout << "Insert time: " << insertTime << endl;
-    //cout << "New group time: " << newGroupTime << endl;
-    //cout << "Neighbour find time: " << ifTime << endl;
-    //cout << "T3 time: " << timeT3 << endl;
+    cout << "Loop Count: " << loopCount << endl;
+    cout << "cc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    cout << "Allocation time: " << totalAllocationTime << endl;
+    cout << "Time %: " << (totalAllocationTime/(float(clock()-begin_time) /  CLOCKS_PER_SEC))*100 << endl;
+    cout << "Connection creation time: " << connTime << endl;
+    cout << "Insert time: " << insertTime << endl;
+    cout << "New group time: " << newGroupTime << endl;
+    cout << "Neighbour find time: " << ifTime << endl;
+    cout << "T3 time: " << timeT3 << endl;
+    begin_time = clock();
     
-    //cout << "cc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //begin_time = clock();
-    
-    //cout << "Number of groups: " << numGroups << endl;
+    cout << "Number of groups: " << numGroups << endl;
     
     // Don't need a full second pass as we only need bounding boxes. Combining
     // by grabbing pixel location extremes is sufficient. May be a faster way
@@ -321,8 +307,8 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
         }
     }
     
-    //cout << "parent finding time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //begin_time = clock();
+    cout << "parent finding time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    begin_time = clock();
     
     // Apply combinations.
     for(int group=groupLinks.size()-1; group>=0; group--)
@@ -391,8 +377,8 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
         }
     }
 
-    //cout << "merge group time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //begin_time = clock();
+    cout << "merge group time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    begin_time = clock();
     
     // Create ROI from every relevant group.
     vector2i roi;
@@ -414,7 +400,7 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
                 if(aspect > 1.0 and aspect < 4.0)
                 {
                     groupHighYs[group] = min((int)(groupLowYs[group]+width-1), 
-                                                             (int)(shape[0]-1));
+                                                            (int)(im.size()-1));
                     height = width;
                 }
 
@@ -433,22 +419,20 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
     }
     
     // Make a pointer version for return.
-    for(int item=0; item<roi.size() && item<100; item++)
-    {
-        for(int entry=0; entry<roi[item].size(); entry++)
-            out[item][entry] = roi[item][entry];
-    }
+    int** data = new int*[roi.size()];
+    for(int item=0; item<roi.size(); item++)
+        data[item] = roi[item].data();
     
-    //cout << "ROI found: " << roi.size() << endl;
+    cout << "ROI found: " << roi.size() << endl;
     
     // Tell python how many ROI were found.
     *numRegions = roi.size();
 
-    //cout << "roi creation time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-    //cout << "C++ total time: " << float( clock () - fullTime ) /  CLOCKS_PER_SEC << endl << endl;
+    cout << "roi creation time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    cout << "C++ total time: " << float( clock () - fullTime ) /  CLOCKS_PER_SEC << endl << endl;
     
     // Return the ROI found.
-    return;
+    return(data);
 }
 
 

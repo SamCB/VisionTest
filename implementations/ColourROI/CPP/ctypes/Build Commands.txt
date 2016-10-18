@@ -1,2 +1,2 @@
-g++ -c ROIFindColour.cpp -std=c++11
+g++ -c ROIFindColour.cpp -std=c++11 -O3
 g++ -shared -o ROIFindColour.dll ROIFindColour.o -Wl,--out-implib,libROIFindColour.a

@@ -3,3 +3,6 @@
 *.DS_Store
 cropped_ims*
 saved_classifier
+*.o
+*.dll
+*.so

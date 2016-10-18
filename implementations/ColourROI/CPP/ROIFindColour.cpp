@@ -23,31 +23,15 @@ typedef vector<vector<float> > vector2f;
 typedef vector<vector<bool> > vector2b;
 typedef vector<vector<int> > vector2i;
 
-vector<int> ROIFindColour(cv::Mat baseIm)
+vector<int> ROIFindColour(cv::Mat im)
 {
     /*
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
     */
-    clock_t begin_time = clock();
+    //clock_t begin_time = clock();
 
-    // Convert the image to a more usable format.
-    vector3f im(baseIm.size[0]);
-    for(int y = 0; y < baseIm.size[0]; y++)
-    {
-        im[y] = vector2f(baseIm.size[1]);
-        for(int x = 0; x < baseIm.size[1]; x++)
-        {
-            im[y][x] = vector<float>(baseIm.channels());
-            cv::Vec3b colour = baseIm.at<cv::Vec3b>(y, x);
-            for(int c = 0; c < baseIm.channels(); c++)
-            {
-                im[y][x][c] = (float)(colour.val[c])/256.0;
-            }
-        }
-    }
-    
-    std::cout << "copy time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "copy time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
 
     // Estimate green as median of a sample from the bottom of the image.
     // Certainly not very efficient, but it'll do for now.
@@ -55,13 +39,14 @@ vector<int> ROIFindColour(cv::Mat baseIm)
     samples[0] = vector<float>();
     samples[1] = vector<float>();
     samples[2] = vector<float>();
-    for(int y = 300; y < im.size(); y += 5)
+    for(int y = 300; y < im.size[0]; y += 5)
     {
-        for(int x = 0; x < im[y].size(); x += 5)
+        for(int x = 0; x < im.size[1]; x += 5)
         {
-            for(int c = 0; c < im[y][x].size(); ++c)
+            cv::Vec3b colour = im.at<cv::Vec3b>(y, x);
+            for(int c = 0; c < im.channels(); ++c)
             {
-                samples[c].push_back(im[y][x][c]);
+                samples[c].push_back(colour[c]);
             }
         }
     }
@@ -71,51 +56,48 @@ vector<int> ROIFindColour(cv::Mat baseIm)
         sort(samples[c].begin(), samples[c].end());
         if(samples[c].size()%2 == 0)
         {
-            green[c] = (samples[c][samples[c].size()/2-1] + 
-                                             samples[c][samples[c].size()/2])/2;
+            green[c] = (((float)samples[c][samples[c].size()/2-1]) + 
+                                    ((float)samples[c][samples[c].size()/2]))/2;
         } 
         else
         {
-           green[c] = samples[c][samples[c].size()/2];
+            green[c] = (float)samples[c][samples[c].size()/2];
         }
     }
 
-    std::cout << "green sample time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "green sample time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
 
     // Look for chunks of stuff that isn't green.
-    vector2b notGreen(im.size());
-    for(int y = 0; y < im.size(); y++)
+    vector2b notGreen(im.size[0], vector<bool>(im.size[1]));
+    for(int y = 0; y < im.size[0]; y++)
     {
-        notGreen[y] = vector<bool>(im[0].size());
-    }
-    for(int y = 0; y < im.size(); y++)
-    {
-        for(int x = 0; x < im[y].size(); x++)
+        for(int x = 0; x < im.size[1]; x++)
         {
-            // This was bugged (no abs) in the original.
-            notGreen[y][x] = (abs(im[y][x][0]-green[0]) + 
-                             abs(im[y][x][1]-green[1]) +
-                                               abs(im[y][x][2]-green[2])) > 0.5;
+            cv::Vec3b colour = im.at<cv::Vec3b>(y, x);
+            notGreen[y][x] = (((float)colour[0])-green[0]) + 
+                             (((float)colour[1])-green[1]) +
+                                            (((float)colour[1])-green[2]) > 128;
         }
     }
 
-    std::cout << "not green time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "not green time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
 
     // Connected component analysis preparation.
-    vector2i groups(im.size());
-    for(int y = 0; y < im.size(); y++)
-    {
-        //notGreen[y] = vector<bool>(im[0].size());
-        groups[y] = vector<int>(im[y].size(), 0);
-    }
+    vector2i groups(im.size[0], vector<int>(im.size[1], 0));
     vector<int> groupCounts(1, 0);
+    groupCounts.reserve(1000);
     vector<int> groupLowXs(1, 0);
+    groupLowXs.reserve(1000);
     vector<int> groupHighXs(1, 0);
+    groupHighXs.reserve(1000);
     vector<int> groupLowYs(1, 0);
+    groupLowYs.reserve(1000);
     vector<int> groupHighYs(1, 0);
+    groupHighYs.reserve(1000);
     vector<vector<int> > groupLinks(1, vector<int>(1, 0));
+    groupLinks.reserve(1000);
     int numGroups = 0;
 
     // Prevent big groups. Could probably be faster if integrated into CCA.
@@ -134,71 +116,139 @@ vector<int> ROIFindColour(cv::Mat baseIm)
         }
     }
 
-    std::cout << "cc prep time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "cc prep time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
+    
+    //float totalAllocationTime = 0;
+    //clock_t allocTimeStart = 0;
+    //clock_t allocTimeStart2 = 0;
+    //float connTime = 0;
+    //float insertTime = 0;
+    //float newGroupTime = 0;
+    //float ifTime = 0;
+    //int loopCount = 0;
+    //clock_t t3 = 0;
+    //float timeT3 = 0;
+    
+    // High so that they will not be smallest group.
+    int topNeighbour = INT_MAX; 
+    int leftNeighbour = INT_MAX;
+    bool hasNeighbour = false;
     
     // Connected component analysis.
     for(int y = 0; y < notGreen.size(); y++)
     {
         for(int x = 0; x < notGreen[y].size(); x++)
         {
+            //loopCount++;
             
             // If this is not a green pixel, group it.
             if(notGreen[y][x] == true)
             {
                 // Get all neighbours.
-                vector<int> neighbours;
-                if(x > 0 && notGreen[y][x-1] == true)
-                    neighbours.push_back(groups[y][x-1]);
-                if(x > 0 && y > 0 && notGreen[y-1][x-1] == true)
-                    neighbours.push_back(groups[y-1][x-1]);
-                if(y > 0 && notGreen[y-1][x] == true)
-                    neighbours.push_back(groups[y-1][x]);
-                if(x < notGreen[0].size()-1 && y > 0 && 
-                                                     notGreen[y-1][x+1] == true)
-                    neighbours.push_back(groups[y-1][x+1]);
-                    
+                hasNeighbour = false;
+                //allocTimeStart2 = clock();
+                if(x > 0 && notGreen[y][x-1]){
+                    leftNeighbour = groups[y][x-1];
+                    hasNeighbour = true;
+                }
+                else
+                    leftNeighbour = INT_MAX;
+                if(y > 0 && notGreen[y-1][x]){
+                    topNeighbour = groups[y-1][x];
+                    hasNeighbour = true;
+                }
+                else
+                    topNeighbour = INT_MAX;
+                //ifTime += float(clock()-allocTimeStart2)/CLOCKS_PER_SEC;
+                
                 // If there are no neighbours create a new label.
-                if(neighbours.size() == 0)
+                if(!hasNeighbour)
                 {
                     numGroups += 1;
                     groups[y][x] = numGroups;
+                    //allocTimeStart = clock();
                     groupLowXs.push_back(x);
                     groupHighXs.push_back(x);
                     groupLowYs.push_back(y);
                     groupHighYs.push_back(y);
                     groupCounts.push_back(1);
                     groupLinks.push_back(vector<int>(1, numGroups));
+                    groupLinks.back().reserve(100);
+                    //totalAllocationTime += float(clock()-allocTimeStart)/CLOCKS_PER_SEC;
+                    //newGroupTime += float(clock()-allocTimeStart)/CLOCKS_PER_SEC;
                 }   
                 // If there is a neighbour build components.
                 else
                 {
-                    groups[y][x] = *min_element(neighbours.begin(), 
-                                                              neighbours.end());
-                    groupCounts[groups[y][x]] += 1;
-                    if(groupHighXs[groups[y][x]] < x)
-                        groupHighXs[groups[y][x]] = x; 
-                    if(groupHighYs[groups[y][x]] < y)
-                        groupHighYs[groups[y][x]] = y;
-                    for(int label=0; label<neighbours.size(); label++)
+                    
+                    //allocTimeStart = clock();
+                    if(topNeighbour < leftNeighbour)
                     {
-                        if(neighbours[label] != groups[y][x])
-                        {
-                            // Insert in sorted order.
-                            groupLinks[neighbours[label]].insert(upper_bound(
-                                groupLinks[neighbours[label]].begin(),
-                                groupLinks[neighbours[label]].end(),
-                                                   groups[y][x]), groups[y][x]);
+                        // Set the pixel's group.
+                        groups[y][x] = topNeighbour;
+                        
+                        // Add a parent to the left neighbour if needed.
+                        if(leftNeighbour != INT_MAX){
+                            //allocTimeStart2 = clock();
+                            groupLinks[leftNeighbour].push_back(topNeighbour);
+                            push_heap(groupLinks[leftNeighbour].begin(), 
+                                      groupLinks[leftNeighbour].end(),
+                                                                greater<int>());
+                            //insertTime += float(clock()-allocTimeStart2)/CLOCKS_PER_SEC;
                         }
+                        
+                        // Update bounding box.
+                        groupCounts[topNeighbour] += 1;
+                        if(groupHighXs[topNeighbour] < x)
+                            groupHighXs[topNeighbour] = x; 
+                        if(groupHighYs[topNeighbour] < y)
+                            groupHighYs[topNeighbour] = y;
                     }
+                    else
+                    {
+                        // Set the pixel's group.
+                        groups[y][x] = leftNeighbour;
+                        
+                        // Add a parent to the top neighbour if needed.
+                        if(topNeighbour != INT_MAX){
+                            //allocTimeStart2 = clock();
+                            groupLinks[topNeighbour].push_back(leftNeighbour);
+                            push_heap(groupLinks[topNeighbour].begin(), 
+                                      groupLinks[topNeighbour].end(), 
+                                                                greater<int>());
+                            //insertTime += float(clock()-allocTimeStart2)/CLOCKS_PER_SEC;
+                        }
+                        
+                        // Update bounding box.
+                        //t3 = clock();
+                        groupCounts[leftNeighbour] += 1;
+                        if(groupHighXs[leftNeighbour] < x)
+                            groupHighXs[leftNeighbour] = x; 
+                        if(groupHighYs[leftNeighbour] < y)
+                            groupHighYs[leftNeighbour] = y;
+                        //timeT3 += float(clock()-t3)/CLOCKS_PER_SEC;
+                    }
+                    //connTime += float(clock()-allocTimeStart)/CLOCKS_PER_SEC;
+                    
                 }
             }
         }
     }
-
-    std::cout << "cc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
-
+    //cout << "Loop Count: " << loopCount << endl;
+    //cout << "Allocation time: " << totalAllocationTime << endl;
+    //cout << "Time %: " << (totalAllocationTime/(float(clock()-begin_time) /  CLOCKS_PER_SEC))*100 << endl;
+    //cout << "Connection creation time: " << connTime << endl;
+    //cout << "Insert time: " << insertTime << endl;
+    //cout << "New group time: " << newGroupTime << endl;
+    //cout << "Neighbour find time: " << ifTime << endl;
+    //cout << "T3 time: " << timeT3 << endl;
+    
+    //cout << "cc time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
+    //begin_time = clock();
+    
+    //cout << "Number of groups: " << numGroups << endl;
+    
     // Don't need a full second pass as we only need bounding boxes. Combining
     // by grabbing pixel location extremes is sufficient. May be a faster way
     // to implement this.
@@ -208,19 +258,20 @@ vector<int> ROIFindColour(cv::Mat baseIm)
     while(changed)
     {
         changed = false;
-        for(int group=0; group<groupLinks.size(); group++)
+        for(int group=1; group<groupLinks.size(); group++)
         {
             // Tell all linked groups the lowest linked group.
             for(int owner=1; owner<groupLinks[group].size(); owner++)
             {
                 changed = true;
                 // Insert in sorted order.
-                if(groupLinks[group][owner] != group) 
+                if(groupLinks[group][owner] != group)
                 {
-                    groupLinks[groupLinks[group][owner]].insert(upper_bound(
-                        groupLinks[groupLinks[group][owner]].begin(),
-                        groupLinks[groupLinks[group][owner]].end(),
-                                      groupLinks[group][0]), groupLinks[group][0]);
+                    groupLinks[groupLinks[group][owner]].push_back(
+                                                          groupLinks[group][0]);
+                    push_heap(groupLinks[groupLinks[group][owner]].begin(), 
+                              groupLinks[groupLinks[group][owner]].end(), 
+                                                                greater<int>());
                 }
             }
             
@@ -248,8 +299,8 @@ vector<int> ROIFindColour(cv::Mat baseIm)
         }
     }
 
-    std::cout << "parent finding time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "parent finding time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
 
     // Merge groups where density remains good.
     changed = true;
@@ -295,12 +346,12 @@ vector<int> ROIFindColour(cv::Mat baseIm)
         if(changed == false and thresh > 0.4)
         {
             changed = true;
-            thresh -= 0.05;
+            thresh -= 0.1;
         }
     }
 
-    std::cout << "merge group time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-    begin_time = clock();
+    //std::cout << "merge group time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //begin_time = clock();
 
     // Create ROI from every relevant group.
     //vector2i roi;
@@ -323,7 +374,7 @@ vector<int> ROIFindColour(cv::Mat baseIm)
                 if(aspect > 1.0 and aspect < 4.0)
                 {
                     groupHighYs[group] = min((int)(groupLowYs[group]+width-1), 
-                                                            (int)(im.size()-1));
+                                                           (int)(im.size[0]-1));
                     height = width;
                 }
 
@@ -344,7 +395,7 @@ vector<int> ROIFindColour(cv::Mat baseIm)
             }
         }
     }
-    std::cout << "roi creation time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+    //std::cout << "roi creation time: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
     
     // Return the ROI found.
     return(roi);
