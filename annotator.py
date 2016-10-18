@@ -8,6 +8,7 @@ import json
 
 from crop_functions.harris_crop import retrieve_subsections
 from crop_functions.subarea_crop import subarea_crop
+from crop_functions.colour_crop import ROIFindColour
 
 from import_module import import_module
 
@@ -27,11 +28,13 @@ def main(source, output_folder):
             break
 
         img, source_name = img_response
-        crops = ReversableIterator(subarea_crop(retrieve_subsections(img)))
+        # crops = ReversableIterator(subarea_crop(ROIFindColour(img)))
+        crops = ReversableIterator(retrieve_subsections(img))
         suboutputs = []
         for idx, (x, y, w, h) in crops:
-            if w < 16 or h < 16:
-                # if it's too small, we don't want it... ever
+            # if w < 16 or h < 16 or x + w > img.shape[1] or y + h > img.shape[0]:
+            if (w > 16 and h > 16) and (w < 8 or h < 8):
+                # we want small images right now
                 crops.remove_current()
                 continue
             try:
