@@ -97,7 +97,7 @@ def main(function, function_args,
 
             if cv2.waitKey(1) == 27:
                 break
-        
+
         print("Frame time: " + str(time.clock()-startFrame))
         print("FPS: " + str(1.0/(time.clock()-startFrame)))
 

@@ -129,7 +129,7 @@ def ROIFindColour(im):
                 groupsHighX[owner] = groupsHighX[group]
             if groupsHighY[group] > groupsHighY[owner]:
                 groupsHighY[owner] = groupsHighY[group]
-
+    
     # Merge groups where density remains good.
     changed = True
     thresh = 0.8
@@ -164,7 +164,7 @@ def ROIFindColour(im):
         if changed == False and thresh > 0.4:
             changed = True
             thresh -= 0.05
-
+    
     # Create ROI from every relevant group.
     roi = []
     for group in range(1, numGroups+1):

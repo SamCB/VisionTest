@@ -67,6 +67,9 @@ def initialise(*args):
     """
     
     return ROIFindColour
+    #return filteredColourROI
+    #return naive_harris_initialise(*args)
+    #return filteredHarrisROI
     
 def filteredColourROI(im):
     
@@ -86,11 +89,11 @@ def filteredColourROI(im):
         classificationStart = time.clock()
         classification = net.run(imReg)
         classificationTime += time.clock()-classificationStart
-        if classification[0] > 0.9:
+        if classification[0] > 0.8:
             finalROI.append(region)
-    print("Number of classifications: " + str(numClass))
-    print("Total classification time: " + str(classificationTime))
-    print("Average classification time: " + str(classificationTime/float(numClass)))
+    #print("Number of classifications: " + str(numClass))
+    #print("Total classification time: " + str(classificationTime))
+    #print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 def filteredHarrisROI(im):

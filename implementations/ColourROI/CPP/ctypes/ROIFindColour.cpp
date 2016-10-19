@@ -135,7 +135,7 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
     int numGroups = 0;
 
     // Prevent big groups. Could probably be faster if integrated into CCA.
-    for(int y = 50; y < notGreen.size(); y += 50)
+    for(int y = 50; y < notGreen.size(); y += 10)
     {
         for(int x = 0; x < notGreen[y].size(); x++)
         {
@@ -146,7 +146,7 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
     }
     for(int y = 0; y < notGreen.size(); y++)
     {
-        for(int x = 0; x < notGreen[y].size(); x += 50)
+        for(int x = 0; x < notGreen[y].size(); x += 10)
         {
             if(notGreen[y][x])
                 notGreenCount--;
@@ -406,7 +406,7 @@ void ROIFindColour(const float* im, const int* shape, int* numRegions,
             int height = groupHighYs[group] - groupLowYs[group] + 1;
             
             // Check pixel density is high enough for a ball.
-            if((float)(groupCounts[group])/(float)(width*height) > 0.3)
+            if((float)(groupCounts[group])/(float)(width*height) > 0.4)
             {  
                 // Balls are round, and we usually get the top half. Make the BB
                 // square if we have a big top half.
