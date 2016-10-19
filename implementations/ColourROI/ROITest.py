@@ -66,10 +66,10 @@ def initialise(*args):
         passed.
     """
     
-    return ROIFindColour
+    #return ROIFindColour
     #return filteredColourROI
     #return naive_harris_initialise(*args)
-    #return filteredHarrisROI
+    return filteredHarrisROI
     
 def filteredColourROI(im):
     
@@ -110,9 +110,34 @@ def filteredHarrisROI(im):
             classificationStart = time.clock()
             classification = net.run(image)
             classificationTime += time.clock()-classificationStart
+            
             if classification[0] > 0.7 or classification[1] > 0.7:
-                region = ('Ball', {'height': h, 'width': w, 'x': x, 'y': y})
+                region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
                 finalROI.append(region)
+            if classification[2] > 0.7:
+                region = ('ball_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[3] > 0.7:
+                region = ('goal_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[4] > 0.7:
+                region = ('goal_post', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[5] > 0.7 or classification[6] > 0.7 or \
+                    classification[7] > 0.7 or classification[8] > 0.7 \
+                    or classification[9] > 0.7  or classification[10] > 0.7:
+                region = ('field', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[11] > 0.7:
+                region = ('nao', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[12] > 0.7:
+                region = ('nao_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[14] > 0.7:
+                region = ('penalty_spot', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+                
     print("Number of classifications: " + str(numClass))
     print("Total classification time: " + str(classificationTime))
     print("Average classification time: " + str(classificationTime/float(numClass)))
