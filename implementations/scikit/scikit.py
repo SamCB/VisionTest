@@ -24,6 +24,8 @@ For example:
 import os
 import errno
 
+import numpy as np
+
 from sklearn import svm, tree, neighbors, ensemble, metrics
 from sklearn.externals import joblib
 
@@ -47,12 +49,16 @@ class ScikitImplementation:
         "SVC": svm.SVC,
         "LinearSVC": svm.LinearSVC,
         "KNeighbors": neighbors.KNeighborsClassifier,
-        "RandomForest": ensemble.RandomForestClassifier
+        "RandomForest": lambda: ensemble.RandomForestClassifier(n_estimators=20)
     }
 
-    def __init__(self, algorithm, data_set, data_processor):
+    CONFIDENCE_CUTOFF = 0.6
+
+    def __init__(self, algorithm, data_set, data_processor, min_confidence=0.6):
         self.data = data_set
         self.data_processor = data_processor
+
+        self.min_confidence = min_confidence
 
         # load_classifier checks if we've saved the classifier to file, if
         #  we have, sweet, we've saved a lot of time.
@@ -77,11 +83,22 @@ class ScikitImplementation:
         return zip(self._classify_subsections(processed_subsections), crop_areas)
 
     def _classify_subsections(self, crops):
-        return self.classifier.predict(crops)
-        # Note. Some classifiers (such as random forest) include a
-        #  a probability function `predict_proba` which outputs a ndarray of
-        #  probabilities based on some internal metric (such as how many trees
-        #  proposed each class) We could use this.
+        if hasattr(self.classifier, "predict_proba"):
+            probabilities = self.classifier.predict_proba(crops)
+            # Add an extra column to probabilities with our minimum required
+            #  confidence and an extra 'nothing' column to the classes, then
+            #  return the respective class that is greatest in each row.
+            min_column = np.full((len(crops), 1), self.min_confidence)
+            min_label = ['nothing']
+
+            limited_probabilities = np.concatenate(
+                                        (probabilities, min_column), axis=1)
+            limited_classes = np.concatenate(
+                                        (self.classifier.classes_, min_label))
+
+            return limited_classes[np.argmax(limited_probabilities, axis=1)]
+        else:
+            return self.classifier.predict(crops)
 
     @staticmethod
     def classifier_save_name(algorithm_name, data_processor):

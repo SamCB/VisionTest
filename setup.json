@@ -2,7 +2,7 @@
     "function": [
       "implementations/scikit/scikit.py",
       "RandomForest",
-      "implementations/scikit/feature_processors/greyscale_histogram_processor.py",
+      "implementations/scikit/feature_processors/histogram_processor.py",
       "../vision_test_files/automated_crop_classifications"
     ],
     "input": [

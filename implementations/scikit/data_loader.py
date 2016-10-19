@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import cv2
+import random
 
 from dataset import DataSet
 
@@ -18,6 +19,9 @@ def load_data(directory, data_processor_module):
         # The files will be of the type:
         # CLASS-source-frame-itemnumber.jpg
         label = f.split("-")[0].lower()
+        if label == "nao_part" or label == "nothing" and random.random() > 0.2:
+            # Because we have too many nao_parts, remove a lot of them
+            continue
         # if label != "nao_part":
         data_set.add_image(img, label)
 
