@@ -52,7 +52,7 @@ class ImageSetInput():
         except IndexError:
             return None
         self._index += self.rate
-        return image
+        return image, None
 
 class LazyImageSetInput():
 
@@ -76,5 +76,5 @@ class LazyImageSetInput():
             rel_path = os.path.relpath(full_path)
             image = cv2.imread(full_path)
             if image is not None:
-                return resize(image, self.scale), rel_path
+                return resize(image, self.scale), None
             # Otherwise, try with the next image

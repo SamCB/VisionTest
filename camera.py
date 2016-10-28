@@ -22,4 +22,4 @@ class CameraInput():
         result, img = self.cam.read()
         if not result:
             raise ValueError("Could not read from webcam")
-        return resize(img, self.scale), "camera"
+        return resize(img, self.scale), None

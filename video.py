@@ -32,4 +32,4 @@ class VideoInput():
             if not result:
                 return None
 
-        return resize(img, self.scale), self.file
+        return resize(img, self.scale), None
