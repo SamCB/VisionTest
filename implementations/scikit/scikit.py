@@ -24,6 +24,8 @@ For example:
 import os
 import errno
 
+import time
+
 import numpy as np
 
 from sklearn import svm, tree, neighbors, ensemble, metrics
@@ -31,6 +33,7 @@ from sklearn.externals import joblib
 
 from crop_functions.harris_crop import retrieve_subsections
 from crop_functions.subarea_crop import subarea_crop
+from crop_functions.colour_crop import colour_crops
 
 from implementations.scikit.data_loader import load_data
 from import_module import import_module
@@ -72,6 +75,7 @@ class ScikitImplementation:
     def answer(self, image):
         def subsections(image):
             for x, y, w, h in subarea_crop(retrieve_subsections(image)):
+            # for x, y, w, h in colour_crops(image):
                 yield self.data_processor(image[y:y+h,x:x+w]), (x, y, w, h)
 
         processed_subsections = []
@@ -83,7 +87,10 @@ class ScikitImplementation:
         return zip(self._classify_subsections(processed_subsections), crop_areas)
 
     def _classify_subsections(self, crops):
+        if len(crops) == 0:
+            return []
         if hasattr(self.classifier, "predict_proba"):
+            start = time.clock()
             probabilities = self.classifier.predict_proba(crops)
             # Add an extra column to probabilities with our minimum required
             #  confidence and an extra 'nothing' column to the classes, then
@@ -95,6 +102,7 @@ class ScikitImplementation:
                                         (probabilities, min_column), axis=1)
             limited_classes = np.concatenate(
                                         (self.classifier.classes_, min_label))
+            print "Classification time:", time.clock() - start, len(crops)
 
             return limited_classes[np.argmax(limited_probabilities, axis=1)]
         else:
@@ -108,9 +116,12 @@ class ScikitImplementation:
     def load_classifier(algorithm_name, data_processor):
         classifier_name = ScikitImplementation.classifier_save_name(algorithm_name, data_processor)
         try:
-            with open(classifier_name, 'r') as f:
-                return joblib.load(f)
+            # with open(classifier_name, 'r') as f:
+            #     return joblib.load(f)
+            return joblib.load(classifier_name)
         except IOError:
+            return None
+        except EOFError:
             return None
 
     @staticmethod
@@ -122,8 +133,9 @@ class ScikitImplementation:
             if not e.errno == errno.EEXIST:
                 raise
 
-        with open(classifier_name, 'w+') as f:
-            joblib.dump(classifier, f)
+        # with open(classifier_name, 'w+') as f:
+        #     joblib.dump(classifier, f)
+        joblib.dump(classifier, classifier_name)
 
     @staticmethod
     def create_classifier(algorithm_name, **kwargs):

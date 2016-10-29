@@ -94,34 +94,58 @@ def filteredColourROI(im):
             finalROI.append(region)
         # region = ('ball', {'height': height, 'width': width, 'x': x, 'y': y})
         # finalROI.append(region)
-    # print("Number of classifications: " + str(numClass))
-    # print("Total classification time: " + str(classificationTime))
-    # if numClass != 0:
-    #     print("Average classification time: " + str(classificationTime/float(numClass)))
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    if numClass != 0:
+        print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 def filteredHarrisROI(im):
-    
     finalROI = []
     classificationTime = 0.0
     grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     numClass = 0
-    start = time.clock()
-    a = subarea_crop(retrieve_subsections(grayIm))
-    print("Harris time: " + str(time.clock() - start))
-    for x, y, w, h in a:
-        numClass += 1
-        classificationStart = time.clock()
-        classification = net.run(im[y:y+h,x:x+w])
-        classificationTime += time.clock()-classificationStart
-        if classification[10] > 0.7 or classification[11] > 0.7 or classification[12] > 0.7:
-            region = ('Nao', {'height': h, 'width': w, 'x': x, 'y': y})
-            finalROI.append(region)
-        # region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
-        # finalROI.append(region)
-    # print("Number of classifications: " + str(numClass))
-    # print("Total classification time: " + str(classificationTime))
-    # print("Average classification time: " + str(classificationTime/float(numClass)))
+    for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
+        image = im[y:y+h,x:x+w]
+        imShape = image.shape
+        if float(imShape[1])/float(imShape[0]) < 3.0 and \
+                                      float(imShape[0])/float(imShape[1]) < 3.0:
+            numClass += 1
+            classificationStart = time.clock()
+            classification = net.run(image)
+            classificationTime += time.clock()-classificationStart
+            
+            if classification[0] > 0.7 or classification[1] > 0.7:
+                region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[2] > 0.7:
+                region = ('ball_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[3] > 0.7:
+                region = ('goal_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[4] > 0.7:
+                region = ('goal_post', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[5] > 0.7 or classification[6] > 0.7 or \
+                    classification[7] > 0.7 or classification[8] > 0.7 \
+                    or classification[9] > 0.7  or classification[10] > 0.7:
+                region = ('field', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[11] > 0.7:
+                region = ('nao', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[12] > 0.7:
+                region = ('nao_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[14] > 0.7:
+                region = ('penalty_spot', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+                
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    if(numClass != 0):
+        print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 class Network():
