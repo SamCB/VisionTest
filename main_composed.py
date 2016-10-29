@@ -63,13 +63,8 @@ For quick, easy usage.
     # Pull out the attributes we want
     function, fargs = setup_method['function'][0], setup_method['function'][1:]
     img_input, iargs = setup_method['input'][0], setup_method['input'][1:]
-    if 'annotations' in setup_method:
-        annotation, aargs = setup_method['annotations'][0], setup_method['annotations'][1:]
-    else:
-        annotation, aargs = None, []
 
     main(function, fargs,
          img_input, iargs,
-         annotation, aargs,
          silent=args.silent,
          save=args.save)
