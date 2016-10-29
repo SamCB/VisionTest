@@ -2,6 +2,7 @@ from __future__ import print_function
 import cv2
 import os
 import json
+import numbers
 
 from image_utils import resize
 
@@ -48,7 +49,7 @@ class ValidatingImageSetInput():
                 full_path = os.path.join(directory, image_annotation['filename'])
                 image = cv2.imread(full_path)
                 if image is not None:
-                    self.annotations.append(image_annotation['annotations'])
+                    self.annotations.append(scale_annotation(image_annotation['annotations'], scale))
                     self.images.append(resize(image, scale))
                 else:
                     print("WARNING: could not find or load '{}'".format(full_path))
@@ -96,5 +97,12 @@ class ValidatingLazyImageSetInput():
             full_path = os.path.join(directory, image_annotation['filename'])
             image = cv2.imread(full_path)
             if image is not None:
-                return resize(image, self.scale), image_annotation['annotations']
+                return resize(image, self.scale), scale_annotation(image_annotation['annotations'], self.scale)
             # Otherwise, try with the next image
+
+def scale_annotation(annotations, scale):
+    for annotation in annotations:
+        for key, val in annotation.items():
+            if isinstance(val, numbers.Number):
+                annotation[key] = val * scale
+    return annotations
