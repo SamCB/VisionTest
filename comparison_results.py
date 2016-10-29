@@ -11,6 +11,10 @@ def convert_annotation_class_name(name):
 def get_prediction_class_name(prediction):
     return prediction[0]
 
+def get_prediction_coords(prediction):
+    c = prediction[1]
+    return (c['x'], c['y'], c['width'], c['height'])
+
 def convert_partial_name(name):
     return "_".join(name.split("_")[:-1])
 
@@ -37,7 +41,7 @@ class ComparisonResults:
             print "{:15}: {:15}".format(ground_truth, prediction)
 
     def add_comparison(self, predictions, annotations):
-        comparison_list = self._create_comparison_lists[annotations]
+        comparison_list = self._create_comparison_lists(annotations)
         false_positive_list = []
         for prediction in predictions:
             prediction_class = get_prediction_class_name(prediction)
@@ -88,12 +92,12 @@ class ComparisonResults:
     def _create_comparison_lists(annotations):
         comparison_list = []
         for annotation in annotations:
-            class_ = convert_class_name(annotation['class'])
+            class_ = convert_annotation_class_name(annotation['class'])
             if class_ in COMPARISON_CLASSES:
                 comparison_list.append(
                     {"class": class_,
                      "coords": (annotation['x'], annotation['y'],
-                                annotation['width'], annotation['height'])
+                                annotation['width'], annotation['height']),
                      "matched": []
                     })
         return comparison_list
@@ -101,9 +105,11 @@ class ComparisonResults:
     @staticmethod
     def _match(prediction, comparison_list, false_positive_list):
         found = False
+
+        prediction_coords = get_prediction_coords(prediction)
         for annotation in comparison_list:
-            if(is_inside(prediction[1], annotation["coords"]) or
-               is_similar(prediction[1], annotation["coords"])):
+            if(is_inside(prediction_coords, annotation["coords"]) or
+               is_similar(prediction_coords, annotation["coords"])):
                     annotation["matched"].append(
                         get_prediction_class_name(prediction)
                     )
@@ -131,7 +137,7 @@ def is_similar(rect, target):
 
     # How much they are allowed to differ. It might be worth changing this so
     #  it's not linear. (We should be comparatively more lenient on smaller boxes)
-    legal_diffs = (rw * 0.1, rh * 0.1, rw * 0.1, rh * 0.1)
+    legal_diffs = (rw * 0.5, rh * 0.5, rw * 0.5, rh * 0.5)
     rect_bounding_box = (min(rx, rx2), min(ry, ry2), max(rx, rx2), max(ry, ry2))
     target_bounding_box = (min(tx, tx2), min(ty, ty2), max(tx, tx2), max(ty, ry2))
 

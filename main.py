@@ -71,7 +71,7 @@ def main(function, function_args,
         cv2.destroyAllWindows()
 
     if len(compared_results) > 0:
-        compared_results.print_pairs()
+        # compared_results.print_pairs()
 
         print(compared_results.classification_report())
         print(compared_results.confusion_matrix())

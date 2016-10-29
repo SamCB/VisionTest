@@ -79,7 +79,7 @@ class ValidatingLazyImageSetInput():
                 loaded_annotations = json.load(f)
 
             for image_annotation in loaded_annotations:
-                self.image_annotations((directory, image_annotation))
+                self.image_annotations.append((directory, image_annotation))
 
         self.scale = scale
         self._index = continue_from
