@@ -1,3 +1,5 @@
+import sklearn.metrics
+
 COMPARISON_CLASSES = {"ball", "nao"}
 PREDICTION_CLASSES = {"ball", "nao", "ball_part", "nao_part"}
 
@@ -17,6 +19,22 @@ class ComparisonResults:
     def __init__(self):
         self.predictions = []
         self.ground_truth = []
+
+    def __len__(self):
+        assert len(self.predictions) == len(self.ground_truth)
+        return len(self.predictions)
+
+    def confusion_matrix(self):
+        return sklearn.metrics.confusion_matrix(self.ground_truth, self.predictions)
+
+    def classification_report(self):
+        return sklearn.metrics.classification_report(self.ground_truth, self.predictions)
+
+    def print_pairs(self):
+        assert len(self.ground_truth) == len(self.predictions)
+
+        for ground_truth, prediction in zip(self.ground_truth, self.predictions):
+            print "{:15}: {:15}".format(ground_truth, prediction)
 
     def add_comparison(self, predictions, annotations):
         comparison_list = self._create_comparison_lists[annotations]
@@ -74,8 +92,8 @@ class ComparisonResults:
             if class_ in COMPARISON_CLASSES:
                 comparison_list.append(
                     {"class": class_,
-                     "coords": ((annotation['x'], annotation['y']),
-                                (annotation['width'], annotation['height']))
+                     "coords": (annotation['x'], annotation['y'],
+                                annotation['width'], annotation['height'])
                      "matched": []
                     })
         return comparison_list
@@ -83,7 +101,13 @@ class ComparisonResults:
     @staticmethod
     def _match(prediction, comparison_list, false_positive_list):
         found = False
-
+        for annotation in comparison_list:
+            if(is_inside(prediction[1], annotation["coords"]) or
+               is_similar(prediction[1], annotation["coords"])):
+                    annotation["matched"].append(
+                        get_prediction_class_name(prediction)
+                    )
+                    found = True
 
         if not found:
             false_positive_list.append(get_prediction_class_name(prediction))

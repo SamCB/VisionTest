@@ -10,7 +10,8 @@ import cv2
 
 from utils import from_dictionary
 from import_module import import_module
-from comparison import compare_results_to_annotation, comparison_string
+from comparison_results import ComparisonResults
+
 from video import VideoInput
 
 
@@ -28,6 +29,8 @@ def main(function, function_args,
     save_img = kwargs.get('save', False)
     im_count = 1
 
+    compared_results = ComparisonResults()
+
     while True:
         # Retrieve image and description from our image input
         response = camera()
@@ -43,9 +46,7 @@ def main(function, function_args,
 
         # Compare our estimation if we're expecting it
         if desc:
-            print(results)
-            print(desc)
-            print("MAGIC COMPARE!")
+            compared_results.add_comparison(results, desc)
 
         # If we want to save the cropped images, save them.
         if save_img:
@@ -68,6 +69,12 @@ def main(function, function_args,
 
     if show_img:
         cv2.destroyAllWindows()
+
+    if len(compared_results) > 0:
+        compared_results.print_pairs()
+
+        print(compared_results.classification_report())
+        print(compared_results.confusion_matrix())
 
 if __name__ == '__main__':
     description = """\
