@@ -58,8 +58,8 @@ def ColourROI(im):
         w = roi[i+1]
         x = roi[i+2]
         y = roi[i+3]
-        # r = random.randrange(0, 5)
-        r = 2.5
+        r = random.randrange(0, 5)
+        # r = 2.5
         if r < 1:
             region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
@@ -75,16 +75,16 @@ def ColourROI(im):
         else:
             region = ('nothing', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
-    return finalROI, 0.0#, 0.0, 1
+    return finalROI
     
 def HarrisROI(im):
     finalROI = []
     classificationTime = 0.0
     grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     numClass = 0
-    for x, y, w, h, t, l in subarea_crop(retrieve_subsections(grayIm)):
-        # r = random.randrange(0, 5)
-        r = 2.5
+    for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
+        r = random.randrange(0, 5)
+        # r = 2.5
         if r < 1:
             region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
@@ -101,5 +101,5 @@ def HarrisROI(im):
             region = ('nothing', {'height': h, 'width': w, 'x': x, 'y': y})
             finalROI.append(region)
 
-    return finalROI, 0.0#, 0.0, 1
+    return finalROI
     

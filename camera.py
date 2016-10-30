@@ -23,18 +23,4 @@ class CameraInput():
         result, img = self.cam.read()
         if not result:
             raise ValueError("Could not read from webcam")
-
-        # maxIntensity = 255.0 # depends on dtype of image data
-
-        # # Parameters for manipulating image data
-        # phi = 1
-        # theta = 1
-
-        # # Decrease intensity such that
-        # # dark pixels become much darker, 
-        # # bright pixels become slightly dark 
-        # newImage = (maxIntensity/phi)*(img/(maxIntensity/theta))**2
-        # newImage = array(newImage,dtype=uint8)
-
-        # return resize(newImage, self.scale), "camera"
-        return resize(img, self.scale), "camera"
+        return resize(img, self.scale), None

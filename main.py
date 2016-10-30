@@ -10,26 +10,25 @@ import cv2
 
 from utils import from_dictionary
 from import_module import import_module
-from comparison import compare_results_to_annotation, comparison_string
+from comparison_results import ComparisonResults
+
 from video import VideoInput
 
 def main(function, function_args,
          img_input, input_args,
-         annotations=None, annotation_args=None, **kwargs):
+         **kwargs):
     get_answer = import_module(function).initialise(*function_args)
     camera = import_module(img_input).initialise(*input_args)
-    if annotations:
-        get_annotations = import_module(annotations).initialise(*annotation_args)
-    else:
-        get_annotations = None
+
     print("Loaded:")
     print("- Function:", function)
     print("- Image Source:", img_input)
-    print("- Annotations:", annotations)
 
     show_img = not kwargs.get('silent', False)
     save_img = kwargs.get('save', False)
     im_count = 1
+
+    compared_results = ComparisonResults()
 
     while True:
         # Retrieve image and description from our image input
@@ -45,14 +44,8 @@ def main(function, function_args,
         results = get_answer(img)
 
         # Compare our estimation if we're expecting it
-        if get_annotations:
-            annotation = get_annotations(desc)
-            if annotation is None:
-                print("Couldn't find annotation for:", desc)
-                print("End")
-                break
-            comparison = compare_results_to_annotation(results, annotation)
-            print(comparison_string(comparison=comparison))
+        if desc:
+            compared_results.add_comparison(results, desc)
 
         # If we want to save the cropped images, save them.
         if save_img:
@@ -75,6 +68,12 @@ def main(function, function_args,
 
     if show_img:
         cv2.destroyAllWindows()
+
+    if len(compared_results) > 0:
+        # compared_results.print_pairs()
+
+        print(compared_results.classification_report())
+        print(compared_results.confusion_matrix())
 
 if __name__ == '__main__':
     description = """\

@@ -22,6 +22,23 @@
       "camera.py",
       "s0.5"
     ]
+  },
+  "annotated":{
+    "function": [
+      "implementations/scikit/scikit.py",
+      "RandomForest",
+      "implementations/scikit/feature_processors/greyscale_histogram_processor.py",
+      "../vision_test_files/automated_crop_classifications"
+    ],
+    "#function": [
+      "example_implementations/naive_harris_function.py"
+    ],
+    "input": [
+      "imageset_validator.py",
+      "../vision_test_files/sunny_field/annotationsManual.json",
+      "s0.5",
+      "lazy"
+    ]
   }
 }
 

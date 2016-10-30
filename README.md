@@ -2,6 +2,8 @@
 
 This script runs on Python 2 and requires OpenCV 2.4
 
+Tests involving HOG descriptors or the Colour ROI will require the appropriate cpp files to be compiled, and will also require an opencv python/cpp conversion library found at https://github.com/Algomorph/pyboostcvconverter
+
 Usage:
 
 ```
@@ -86,4 +88,54 @@ And you could call it by
 
 ```
 python main.py ~/some/folder/bad.py camera.py
+```
+
+## Performing Validation
+
+To perform validation using annotated images, you need to have a json file with annotations recorded like so:
+
+```json
+[
+  { "annotations": [
+      {
+          "class": "Ball",
+          "height": 67.0,
+          "width": 63.0,
+          "x": 500.0,
+          "y": 271.0
+      },
+      {
+          "class": "Nao",
+          "height": 55.0,
+          "width": 14.0,
+          "x": 321.0,
+          "y": 73.0
+      }
+    ],
+    "filename": "relative/path/to/image.jpg"
+  },
+  {},
+  {},
+  {}
+]
+```
+
+Then create a new setup in the `setup.json` file which uses `imageset_validator.py` for the input like so:
+
+```json
+{ "annotated": {
+    "function": [
+      "some/function/implementation.py"
+    ],
+    "input": [
+      "imageset_validator.py",
+      "../an/example/annotationsManual.json",
+      "../yet/another/annotationsManual.json",
+      "../../as/many/as/you/want/annotationsManual.json",
+      "then some other args like",
+      "lazy",
+      "s0.5"
+    ]
+  }
+}
 ```
