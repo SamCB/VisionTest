@@ -14,8 +14,6 @@ from skimage.feature import blob_doh
 import bisect
 import time
 
-baseIm = cv2.imread("testIm.png")
-
 def ROIFindColour(im):
     """
     Finds a region of interest based on colour blobs. ADD FULL DESCRIPTION.
@@ -33,8 +31,6 @@ def ROIFindColour(im):
 
     # Look for chunks of stuff that isn't green.
     notGreen = np.sum(im - green, 2) > 0.5
-    plt.figure()
-    plt.imshow(notGreen, cmap='Greys_r', interpolation='nearest')
 
     # Slow in python, but would be fast on Nao in C++.
     groups = np.zeros(notGreen.shape, np.int)

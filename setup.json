@@ -1,14 +1,14 @@
-{ "scikit_and_video":{
+{ "RF_Histogram_Video":{
     "function": [
       "implementations/scikit/scikit.py",
       "RandomForest",
-      "implementations/scikit/feature_processors/histogram_processor.py",
+      "implementations/scikit/feature_processors/hog_processor.py",
       "../vision_test_files/automated_crop_classifications"
     ],
     "input": [
       "video.py",
-      "../vision_test_files/more_tests/IMG_2133.m4v",
-      "s0.25"
+      "../VisionTest_old/field.mp4",
+      "s1"
     ]
   },
   "scikit_and_camera":{
@@ -41,3 +41,5 @@
     ]
   }
 }
+
+

@@ -14,7 +14,6 @@ from comparison_results import ComparisonResults
 
 from video import VideoInput
 
-
 def main(function, function_args,
          img_input, input_args,
          **kwargs):
@@ -81,9 +80,9 @@ if __name__ == '__main__':
 Test out vision functions for Robot Soccer.
 """
     epilog = """\
----------------------------
+----------------------------
 Examples:
----------------------------
+----------------------------
 
 ---- Command Line Setup ----
 

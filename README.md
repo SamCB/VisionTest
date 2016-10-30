@@ -2,6 +2,8 @@
 
 This script runs on Python 2 and requires OpenCV 2.4
 
+Tests involving HOG descriptors or the Colour ROI will require the appropriate cpp files to be compiled, and will also require an opencv python/cpp conversion library found at https://github.com/Algomorph/pyboostcvconverter
+
 Usage:
 
 ```

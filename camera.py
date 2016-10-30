@@ -1,6 +1,7 @@
 import cv2
 
 from image_utils import resize
+from pylab import array, plot, show, axis, arange, figure, uint8 
 
 
 def initialise(*args):
@@ -16,7 +17,7 @@ class CameraInput():
 
     def __init__(self, scale):
         self.scale = scale
-        self.cam = cv2.VideoCapture(0)
+        self.cam = cv2.VideoCapture(1)
 
     def read(self):
         result, img = self.cam.read()

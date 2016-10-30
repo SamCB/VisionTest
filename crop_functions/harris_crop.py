@@ -41,10 +41,3 @@ def retrieve_subsections(img):
     for contour in contours:
         # x, y, w, h
         yield cv2.boundingRect(contour)
-
-def retrieve_output_subsections(img):
-    final_subsections = []
-    for x, y, w, h in retrieve_subsections(img):
-        subsection = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
-        final_subsections.append(subsection)
-    return final_subsections

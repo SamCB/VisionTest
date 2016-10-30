@@ -41,17 +41,23 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.insert(0, './implementations/ColourROI')
+# sys.path.insert(0, './implementations/ColourROI/CPP/ctypes')
+sys.path.insert(0, './example_implementations')
 sys.path.insert(0, './crop_functions')
-from ROIFindColour import ROIFindColour
+# from ROIFindColourCPP import ROIFindColour
+# from ROIFindColour import ROIFindColour
+from colourROI import ROIFindColour
 from harris_crop import retrieve_subsections
-from harris_crop import retrieve_output_subsections
+from subarea_crop import subarea_crop
+from naive_harris_function import initialise as naive_harris_initialise
+import pbcvt
 
 """
 Run with (specific to my file layout):
 python main.py ./implementations/ColourROI/ROITest.py SPQRRead.py SPQRAnnotations.py
 """
 
-def initialise():
+def initialise(*args):
     """
     Creates the network and returns the annotation function.
     
@@ -62,41 +68,84 @@ def initialise():
         passed.
     """
     
-    return retrieve_output_subsections
+    # return filteredColourROI
+    return filteredHarrisROI
     
 def filteredColourROI(im):
     
     finalROI = []
     roi = ROIFindColour(im)
     classificationTime = 0.0
-    for region in roi:
-        x = region[1]['x']
-        y = region[1]['y']
-        width = region[1]['width']
-        height = region[1]['height']
+    numClass = 0
+    for i in range(0, len(roi), 4):
+        height = roi[i]
+        width = roi[i+1]
+        x = roi[i+2]
+        y = roi[i+3]
         if y+height > im.shape[0]:
             y -= (y+height)-im.shape[0]
         imReg = im[y:(y+height), x:(x+width)]
         classificationStart = time.clock()
         classification = net.run(imReg)
         classificationTime += time.clock()-classificationStart
+        numClass += 1
         if classification[0] > 0.9:
+            region = ('ball', {'height': height, 'width': width, 'x': x, 'y': y})
             finalROI.append(region)
-    print("Classification Time: " + str(classificationTime))
+        # region = ('ball', {'height': height, 'width': width, 'x': x, 'y': y})
+        # finalROI.append(region)
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    if numClass != 0:
+        print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 def filteredHarrisROI(im):
     finalROI = []
     classificationTime = 0.0
     grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    for x, y, w, h in retrieve_subsections(grayIm):
-        classificationStart = time.clock()
-        classification = net.run(im[y:y+h,x:x+w])
-        classificationTime += time.clock()-classificationStart
-        if classification[0] > 0.9:
-            region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
-            finalROI.append(region)
-    print("Classification Time: " + str(classificationTime))
+    numClass = 0
+    for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
+        image = im[y:y+h,x:x+w]
+        imShape = image.shape
+        if float(imShape[1])/float(imShape[0]) < 3.0 and \
+                                      float(imShape[0])/float(imShape[1]) < 3.0:
+            numClass += 1
+            classificationStart = time.clock()
+            classification = net.run(image)
+            classificationTime += time.clock()-classificationStart
+            
+            if classification[0] > 0.7 or classification[1] > 0.7:
+                region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[2] > 0.7:
+                region = ('ball_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[3] > 0.7:
+                region = ('goal_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[4] > 0.7:
+                region = ('goal_post', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[5] > 0.7 or classification[6] > 0.7 or \
+                    classification[7] > 0.7 or classification[8] > 0.7 \
+                    or classification[9] > 0.7  or classification[10] > 0.7:
+                region = ('field', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[11] > 0.7:
+                region = ('nao', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[12] > 0.7:
+                region = ('nao_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[14] > 0.7:
+                region = ('penalty_spot', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+                
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    if(numClass != 0):
+        print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
     
 class Network():
@@ -170,7 +219,7 @@ class Network():
                                                               metrics=['accuracy'])
         return model
 
-net = Network(os.path.join('..', 'storedModels', 'testModel'))
+net = Network(os.path.join('implementations/ColourROI/network/'))
 
 
 
