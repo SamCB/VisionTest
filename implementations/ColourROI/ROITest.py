@@ -67,14 +67,16 @@ def initialise(*args):
     """
     
     #return ROIFindColour
-    #return filteredColourROI
-    #return naive_harris_initialise(*args)
     return filteredHarrisROI
+    #return naive_harris_initialise(*args)
+    #return filteredColourROI
     
 def filteredColourROI(im):
     
     finalROI = []
+    startTime = time.time()
     roi = ROIFindColour(im)
+    print "ROI Time: ", time.time()-startTime
     classificationTime = 0.0
     numClass = 0
     for region in roi:
@@ -89,7 +91,7 @@ def filteredColourROI(im):
         classificationStart = time.clock()
         classification = net.run(imReg)
         classificationTime += time.clock()-classificationStart
-        if classification[0] > 0.8:
+        if classification[0] > 0.9:
             finalROI.append(region)
     #print("Number of classifications: " + str(numClass))
     #print("Total classification time: " + str(classificationTime))
@@ -111,9 +113,10 @@ def filteredHarrisROI(im):
             classification = net.run(image)
             classificationTime += time.clock()-classificationStart
             
-            if classification[0] > 0.7 or classification[1] > 0.7:
+            if classification[0] > 0.9 or classification[1] > 1.7:
                 region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
                 finalROI.append(region)
+                """
             if classification[2] > 0.7:
                 region = ('ball_part', {'height': h, 'width': w, 'x': x, 'y': y})
                 finalROI.append(region)
@@ -137,6 +140,7 @@ def filteredHarrisROI(im):
             if classification[14] > 0.7:
                 region = ('penalty_spot', {'height': h, 'width': w, 'x': x, 'y': y})
                 finalROI.append(region)
+                """
                 
     print("Number of classifications: " + str(numClass))
     print("Total classification time: " + str(classificationTime))
