@@ -34,6 +34,7 @@ from scipy.ndimage import imread
 from scipy import misc
 from scipy import stats
 from skimage import transform as tf
+from scipy.signal import convolve2d
 
 from skimage.measure import label as makeBlobs
 
@@ -67,9 +68,10 @@ def initialise(*args):
     """
     
     #return ROIFindColour
-    return filteredHarrisROI
-    #return naive_harris_initialise(*args)
+    #return filteredHarrisROI
+    return naive_harris_initialise(*args)
     #return filteredColourROI
+    #return filteredOGHarrisROI
     
 def filteredColourROI(im):
     
@@ -146,6 +148,56 @@ def filteredHarrisROI(im):
     print("Total classification time: " + str(classificationTime))
     print("Average classification time: " + str(classificationTime/float(numClass)))
     return finalROI
+
+def filteredOGHarrisROI(im):
+    finalROI = []
+    classificationTime = 0.0
+    grayIm = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    numClass = 0
+    for x, y, w, h in subarea_crop(retrieve_subsections(grayIm)):
+        image = im[y:y+h,x:x+w]
+        imShape = image.shape
+        if float(imShape[1])/float(imShape[0]) < 3.0 and \
+                                      float(imShape[0])/float(imShape[1]) < 3.0:
+            numClass += 1
+    
+            classificationStart = time.clock()
+            classification = net.run(image, True)
+            classificationTime += time.clock()-classificationStart
+            
+            if classification[0] > 0.8 or classification[1] > 1.7:
+                region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+                """
+            if classification[2] > 0.7:
+                region = ('ball_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[3] > 0.7:
+                region = ('goal_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[4] > 0.7:
+                region = ('goal_post', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[5] > 0.7 or classification[6] > 0.7 or \
+                    classification[7] > 0.7 or classification[8] > 0.7 \
+                    or classification[9] > 0.7  or classification[10] > 0.7:
+                region = ('field', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[11] > 0.7:
+                region = ('nao', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[12] > 0.7:
+                region = ('nao_part', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+            if classification[14] > 0.7:
+                region = ('penalty_spot', {'height': h, 'width': w, 'x': x, 'y': y})
+                finalROI.append(region)
+                """
+                
+    print("Number of classifications: " + str(numClass))
+    print("Total classification time: " + str(classificationTime))
+    print("Average classification time: " + str(classificationTime/float(numClass)))
+    return finalROI
     
 class Network():
     """
@@ -170,7 +222,7 @@ class Network():
         # are hard coded here.
         self.classes = ['Ball', 'Nao']
      
-    def run(self, image):
+    def run(self, image, og=False):
         """
         Analyses image with the network and returns the class confidence.
         
@@ -184,15 +236,37 @@ class Network():
         np.array
             A list of class confidence, of the form [Ball, Nao].
         """
-        
-        # Make the prediction.
+
         #start = time.clock()
+        
+        # Rescale.
         im = cv2.resize(image, (16, 16))
-        im = im.transpose(2,0,1)
-        im = np.array(im, dtype=float)
+        
+        # OG it.
+        if og:
+            ogIm = []
+            for c in range(im.shape[2]):
+                ogIm.append(convolve2d(im[:,:,c], [[-1, 0, 1]], 'same', 
+                                                                     'fill', 0))
+                ogIm.append(convolve2d(im[:,:,c], [[1], [0], [-1]], 'same', 
+                                                                     'fill', 0))
+                divs = 256.0/(ogIm[-1].astype(float)+ogIm[-2].astype(float))
+                ogIm[-1] = np.array(ogIm[-1]/divs, dtype=np.int16)
+                ogIm[-2] = np.array(ogIm[-2]/divs, dtype=np.int16)
+                                                                 
+            # And replace im.
+            im = np.array(ogIm, dtype=float)
+            
+        # Or just reshape.
+        else:
+            im = im.transpose(2,0,1)
+            im = np.array(im, dtype=float)
+
+        # Convert rainge.
         im /= 255
         #print("Region prep time: " + str(time.clock()-start))
         #start = time.clock()
+        # Make the prediction.
         prediction = (self.net.predict(np.array([im]), verbose=0))[0]
         #print("Prediction time: " + str(time.clock()-start))                                                        
         # Return the class confidence list.
