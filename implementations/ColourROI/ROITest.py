@@ -69,9 +69,9 @@ def initialise(*args):
     
     #return ROIFindColour
     #return filteredHarrisROI
-    return naive_harris_initialise(*args)
+    #return naive_harris_initialise(*args)
     #return filteredColourROI
-    #return filteredOGHarrisROI
+    return filteredOGHarrisROI
     
 def filteredColourROI(im):
     
