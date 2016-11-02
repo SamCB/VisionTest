@@ -165,7 +165,7 @@ def filteredOGHarrisROI(im):
             classification = net.run(image, True)
             classificationTime += time.clock()-classificationStart
             
-            if classification[0] > 0.8 or classification[1] > 1.7:
+            if classification[0] > 0.9 or classification[1] > 1.7:
                 region = ('ball', {'height': h, 'width': w, 'x': x, 'y': y})
                 finalROI.append(region)
                 """
