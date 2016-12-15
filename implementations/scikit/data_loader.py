@@ -7,26 +7,30 @@ import random
 from dataset import DataSet
 
 def load_data(directory, data_processor_module):
-    file_list = os.listdir(directory)
+    class_list = os.listdir(directory)
     data_set = DataSet(data_processor_module)
 
-    for i, f in enumerate(file_list):
-        full_filename = os.path.join(directory, f)
-        img = cv2.imread(full_filename)
-        if img is None:
-            print("WARNING: File: '{}' could not be loaded".format(full_filename))
-            continue
-        # The files will be of the type:
-        # CLASS-source-frame-itemnumber.jpg
-        label = f.split("-")[0].lower()
-        if label == "nao_part" or label == "nothing" and random.random() > 0.2:
-            # Because we have too many nao_parts, remove a lot of them
-            continue
-        # if label != "nao_part":
-        data_set.add_image(img, label)
+    for index, folder in enumerate(class_list):
 
-        if i % 100:
-            print("{}/{} - {:5.2f}%".format(i, len(file_list), i*100./len(file_list)), end="\r")
+        full_class_path = os.path.join(directory, folder)
+        if not os.path.isdir(full_class_path):
+            continue
+        file_list = os.listdir(full_class_path)
+        label = folder
+
+        for i, f in enumerate(file_list):
+
+            full_filename = os.path.join(full_class_path, f)
+            img = cv2.imread(full_filename)
+            if img is None:
+                print("WARNING: File: '{}' could not be loaded".format(full_filename))
+                continue
+
+            # if label != "nao_part":
+            data_set.add_image(img, label)
+
+            if i % 100:
+                print("{}/{} - {:5.2f}%".format(i, len(file_list), i*100./len(file_list)), end="\r")
 
     print("                        ", end="\r")
 
@@ -36,3 +40,51 @@ def load_data(directory, data_processor_module):
     data_set.process()
 
     return data_set
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

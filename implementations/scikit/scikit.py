@@ -33,10 +33,12 @@ from sklearn.externals import joblib
 
 from crop_functions.harris_crop import retrieve_subsections
 from crop_functions.subarea_crop import subarea_crop
-from crop_functions.colour_crop import colour_crops
+#from crop_functions.colour_crop import colour_crops
 
 from implementations.scikit.data_loader import load_data
 from import_module import import_module
+
+from implementations.scikit.ForestToCPP import convertForest
 
 def initialise(algorithm, feature_processor_module, data_folder):
     data_processor = import_module(feature_processor_module).feature_processor()
@@ -52,7 +54,7 @@ class ScikitImplementation:
         "SVC": svm.SVC,
         "LinearSVC": svm.LinearSVC,
         "KNeighbors": neighbors.KNeighborsClassifier,
-        "RandomForest": lambda: ensemble.RandomForestClassifier(n_estimators=20)
+        "RandomForest": lambda: ensemble.RandomForestClassifier(n_estimators=20, min_samples_split=0.001, class_weight="balanced")
     }
 
     CONFIDENCE_CUTOFF = 0.6
@@ -65,12 +67,15 @@ class ScikitImplementation:
 
         # load_classifier checks if we've saved the classifier to file, if
         #  we have, sweet, we've saved a lot of time.
-        self.classifier = self.load_classifier(algorithm, data_processor)
+        self.classifier = self.load_classifier(algorithm, data_processor, True)
 
         if self.classifier is None:
             self.classifier = self.create_classifier(algorithm)
             self.classifier.fit(self.data.data, self.data.labels)
             self.save_classifier(algorithm, data_processor, self.classifier)
+
+        if algorithm == "RandomForest":
+            convertForest(self.classifier)
 
     def answer(self, image):
         def subsections(image):
@@ -113,15 +118,19 @@ class ScikitImplementation:
         return "./saved_classifier/{}-{}.pkl".format(algorithm_name, data_processor.__name__)
 
     @staticmethod
-    def load_classifier(algorithm_name, data_processor):
-        classifier_name = ScikitImplementation.classifier_save_name(algorithm_name, data_processor)
-        try:
-            # with open(classifier_name, 'r') as f:
-            #     return joblib.load(f)
-            return joblib.load(classifier_name)
-        except IOError:
-            return None
-        except EOFError:
+    def load_classifier(algorithm_name, data_processor, load=True):
+        
+        if load:
+            classifier_name = ScikitImplementation.classifier_save_name(algorithm_name, data_processor)
+            try:
+                # with open(classifier_name, 'r') as f:
+                #     return joblib.load(f)
+                return joblib.load(classifier_name)
+            except IOError:
+                return None
+            except EOFError:
+                return None
+        else:
             return None
 
     @staticmethod

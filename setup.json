@@ -16,11 +16,11 @@
       "implementations/scikit/scikit.py",
       "RandomForest",
       "implementations/scikit/feature_processors/greyscale_histogram_processor.py",
-      "../vision_test_files/automated_crop_classifications"
+      "../data/automated_crop_classifications"
     ],
     "input": [
-      "camera.py",
-      "s0.5"
+      "video.py",
+      "../data/ball8.mp4"
     ]
   },
   "annotated":{
@@ -38,6 +38,15 @@
       "../vision_test_files/sunny_field/annotationsManual.json",
       "s0.5",
       "lazy"
+    ]
+  },
+  "colourROI":{
+    "function": [
+      "implementations/ColourROI/ROITest.py"
+    ],
+    "input": [
+      "camera.py",
+      "s0.5"
     ]
   }
 }

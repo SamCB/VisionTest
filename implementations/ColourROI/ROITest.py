@@ -18,16 +18,16 @@ import time
 
 from sklearn.cross_validation import train_test_split
 from sklearn.cross_validation import KFold
-from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, Flatten, Permute, Reshape
-from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
-from keras.optimizers import SGD
-from keras.utils import np_utils
-from keras.models import model_from_json
-from keras.regularizers import l2
-from keras.regularizers import l1l2
-from keras.preprocessing import image as kIm
-from keras.callbacks import ModelCheckpoint
+#from keras.models import Sequential
+#from keras.layers.core import Dense, Dropout, Activation, Flatten, Permute, Reshape
+#from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
+#from keras.optimizers import SGD
+#from keras.utils import np_utils
+#from keras.models import model_from_json
+#from keras.regularizers import l2
+#from keras.regularizers import l1l2
+#from keras.preprocessing import image as kIm
+#from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import log_loss
 from sklearn.metrics import accuracy_score
 from scipy.ndimage import imread
@@ -40,13 +40,13 @@ from skimage.measure import label as makeBlobs
 import matplotlib.pyplot as plt
 
 import sys
-sys.path.insert(0, './implementations/ColourROI')
-# sys.path.insert(0, './implementations/ColourROI/CPP/ctypes')
+#sys.path.insert(0, './implementations/ColourROI')
+sys.path.insert(0, './implementations/ColourROI/CPP/NoOpenCV')
 sys.path.insert(0, './example_implementations')
 sys.path.insert(0, './crop_functions')
-# from ROIFindColourCPP import ROIFindColour
+from ROIFindColourCPP import ROIFindColour
 # from ROIFindColour import ROIFindColour
-from colourROI import ROIFindColour
+#from colourROI import ROIFindColour
 from harris_crop import retrieve_subsections
 from subarea_crop import subarea_crop
 from naive_harris_function import initialise as naive_harris_initialise
@@ -68,8 +68,9 @@ def initialise(*args):
         passed.
     """
     
-    # return filteredColourROI
-    return filteredHarrisROI
+    return ROIFindColour
+    #return filteredColourROI
+    #return filteredHarrisROI
     
 def filteredColourROI(im):
     
