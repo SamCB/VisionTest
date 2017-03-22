@@ -13,7 +13,8 @@ from import_module import import_module
 from comparison_results import ComparisonResults
 
 from video import VideoInput
-
+# NEED TO CHANGE THE DATA_LOADER FILE SO IT CAN READ YUV.
+# NEED TO CHANGE THE DATA PROCESSOR TO BE COMPATIBLE WITH THE RESULT.
 def main(function, function_args,
          img_input, input_args,
          **kwargs):
